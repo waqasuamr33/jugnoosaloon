@@ -23,6 +23,7 @@ interface ServiceCategory {
   title: string;
   subtitle: string;
   image: string;
+  fallbackImage: string;
   services: ServiceItem[];
 }
 
@@ -30,6 +31,7 @@ export default function ServiceMatrix({ onOpenBooking }: ServiceMatrixProps) {
   const [activeTab, setActiveTab] = useState<string>("");
   const [categoriesList, setCategoriesList] = useState<ServiceCategory[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     async function loadBackendServices() {
@@ -63,15 +65,17 @@ export default function ServiceMatrix({ onOpenBooking }: ServiceMatrixProps) {
                 };
               });
 
+            const fallback = fallbackImages[idx % fallbackImages.length];
             const categoryImage = (cat.image || cat.image_url)
               ? normalizeImageUrl(cat.image_url, cat.image)
-              : fallbackImages[idx % fallbackImages.length];
+              : fallback;
 
             return {
               id: `cat-${cat.id}`,
               title: cat.title,
               subtitle: cat.description || `Luxury ${cat.title} treatments at Jugnu's Saloon.`,
               image: categoryImage,
+              fallbackImage: fallback,
               services: matchedServices,
             };
           });
@@ -213,9 +217,13 @@ export default function ServiceMatrix({ onOpenBooking }: ServiceMatrixProps) {
 
                 <div className="lg:col-span-5 relative h-80 lg:h-[420px] rounded-2xl overflow-hidden bg-[#F8F8F6]">
                   <Image
-                    src={activeCategory.image}
+                    key={`${activeCategory.id}-${failedImages[activeCategory.id] ? 'fallback' : 'primary'}`}
+                    src={failedImages[activeCategory.id] ? activeCategory.fallbackImage : activeCategory.image}
                     alt={activeCategory.title}
                     fill
+                    onError={() => {
+                      setFailedImages((prev) => ({ ...prev, [activeCategory.id]: true }));
+                    }}
                     className="object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />

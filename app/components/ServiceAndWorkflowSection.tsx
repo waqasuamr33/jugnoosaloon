@@ -24,6 +24,7 @@ interface CategoryData {
   subline: string;
   services: ServiceItem[];
   image: string;
+  fallbackImage: string;
   servicesCount?: number;
 }
 
@@ -57,6 +58,7 @@ export default function ServiceAndWorkflowSection({
   const [categoriesList, setCategoriesList] = useState<CategoryData[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     async function loadApiData() {
@@ -98,9 +100,10 @@ export default function ServiceAndWorkflowSection({
                   })
               : [];
 
+            const fallback = fallbackImages[idx % fallbackImages.length];
             const categoryImage = (cat.image || cat.image_url)
               ? normalizeImageUrl(cat.image_url, cat.image)
-              : fallbackImages[idx % fallbackImages.length];
+              : fallback;
 
             return {
               id: `cat-${cat.id}`,
@@ -110,6 +113,7 @@ export default function ServiceAndWorkflowSection({
               subline: cat.description || `Luxury ${cat.title} treatments at Jugnu's Saloon.`,
               services: matchedServices,
               image: categoryImage,
+              fallbackImage: fallback,
               servicesCount: cat.services_count ?? matchedServices.length,
             };
           });
@@ -454,11 +458,14 @@ export default function ServiceAndWorkflowSection({
                 {/* RIGHT — Category Hero Image & Gold Frame */}
                 <div className="relative min-h-[400px] lg:min-h-[580px] overflow-hidden bg-[#F8F8F6]">
                   <Image
-                    key={current.id}
-                    src={current.image}
+                    key={`${current.id}-${failedImages[current.id] ? 'fallback' : 'primary'}`}
+                    src={failedImages[current.id] ? current.fallbackImage : current.image}
                     alt={current.headline}
                     fill
                     priority
+                    onError={() => {
+                      setFailedImages((prev) => ({ ...prev, [current.id]: true }));
+                    }}
                     className="object-cover transition-transform duration-700 hover:scale-105"
                   />
                   <div
