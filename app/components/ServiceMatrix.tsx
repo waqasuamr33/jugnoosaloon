@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { getServices, getServiceCategories } from "../lib/api";
+import { getServices, getServiceCategories, normalizeImageUrl } from "../lib/api";
 
 interface ServiceMatrixProps {
   onOpenBooking: (serviceName?: string) => void;
@@ -39,7 +39,7 @@ export default function ServiceMatrix({ onOpenBooking }: ServiceMatrixProps) {
           getServices(),
         ]);
 
-        const images = [
+        const fallbackImages = [
           "/images/bridal_makeup.png",
           "/images/beauty_facial.png",
           "/images/hair_styling.png",
@@ -63,11 +63,15 @@ export default function ServiceMatrix({ onOpenBooking }: ServiceMatrixProps) {
                 };
               });
 
+            const categoryImage = (cat.image || cat.image_url)
+              ? normalizeImageUrl(cat.image_url, cat.image)
+              : fallbackImages[idx % fallbackImages.length];
+
             return {
               id: `cat-${cat.id}`,
               title: cat.title,
               subtitle: cat.description || `Luxury ${cat.title} treatments at Jugnu's Saloon.`,
-              image: images[idx % images.length],
+              image: categoryImage,
               services: matchedServices,
             };
           });

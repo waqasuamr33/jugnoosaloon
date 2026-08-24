@@ -14,7 +14,10 @@ export interface ProductItem {
 export interface ServiceCategoryItem {
   id: number;
   title: string;
-  description?: string;
+  description?: string | null;
+  image?: string | null;
+  image_url?: string | null;
+  services_count?: number;
   created_at?: string;
   updated_at?: string;
 }
