@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import {
   CustomerProfile,
   CustomerLoginPayload,
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = async (payload: CustomerLoginPayload) => {
+  const login = useCallback(async (payload: CustomerLoginPayload) => {
     const res = await customerLogin(payload);
     if (res.success && res.data) {
       setCustomer(res.data);
@@ -64,9 +64,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true, message: res.message || "Logged in successfully" };
     }
     return { success: false, error: res.error || res.message || "Login failed" };
-  };
+  }, [onAuthSuccessCallback]);
 
-  const signup = async (payload: CustomerSignupPayload) => {
+  const signup = useCallback(async (payload: CustomerSignupPayload) => {
     const res = await customerSignup(payload);
     if (res.success && res.data) {
       setCustomer(res.data);
@@ -83,18 +83,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true, message: res.message || "Registered successfully" };
     }
     return { success: false, error: res.error || res.message || "Signup failed" };
-  };
+  }, [onAuthSuccessCallback]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setCustomer(null);
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch (e) {
       console.warn("Error removing customer session:", e);
     }
-  };
+  }, []);
 
-  const openAuthModal = (
+  const openAuthModal = useCallback((
     promptMessage = "",
     onAuthSuccess?: (cust: CustomerProfile) => void
   ) => {
@@ -105,13 +105,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setOnAuthSuccessCallback(null);
     }
     setIsAuthModalOpen(true);
-  };
+  }, []);
 
-  const closeAuthModal = () => {
+  const closeAuthModal = useCallback(() => {
     setIsAuthModalOpen(false);
     setAuthPromptMessage("");
     setOnAuthSuccessCallback(null);
-  };
+  }, []);
 
   return (
     <AuthContext.Provider

@@ -23,8 +23,10 @@ const slides = [
     titleLine2: "TRANSFORMATIONS",
     desc: "Step into your dream bridal look with airbrush precision, glowing complexion sculpting, and traditional draping excellence.",
     image: "/images/hero-1.jpeg",
+    mobileImage: "/images/hero-m.jpeg",
     alt: "Royal HD Airbrush Bridal Makeup",
     objectPosition: "center top",
+    mobileObjectPosition: "center 45px",
   },
   {
     id: 3,
@@ -78,19 +80,30 @@ export default function Hero({ onOpenBooking }: HeroProps) {
       {slides.map((s, index) => (
         <div
           key={s.id}
-          className={`absolute inset-0 z-0 transition-opacity duration-1000 ease-in-out ${
-            index === currentSlide ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none"
-          }`}
+          className={`absolute inset-0 z-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none"
+            }`}
           style={{ transitionProperty: "opacity, transform" }}
         >
+          {/* Desktop Image */}
           <Image
             src={s.image}
             alt={s.alt}
             fill
             priority={index === 0}
-            className="object-cover"
+            className={`object-cover ${s.mobileImage ? "hidden sm:block" : ""}`}
             style={{ objectPosition: s.objectPosition || "center center" }}
           />
+
+          {/* Mobile Specific Image */}
+          {s.mobileImage && (
+            <Image
+              src={s.mobileImage}
+              alt={s.alt}
+              fill
+              className="object-cover block sm:hidden"
+              style={{ objectPosition: s.mobileObjectPosition || "center 60px" }}
+            />
+          )}
 
           {/* Heavy Dark Left Gradient: Prevents text-image collision */}
           <div
@@ -122,36 +135,33 @@ export default function Hero({ onOpenBooking }: HeroProps) {
       ))}
 
       {/* ── Foreground Content ── */}
-      <div className="max-w-[1480px] mx-auto px-6 sm:px-10 lg:px-16 w-full relative z-10 pt-28 pb-20">
-        <div className="max-w-2xl space-y-6">
+      <div className="max-w-[1480px] mx-auto px-5 sm:px-10 lg:px-16 w-full relative z-10 pt-28 pb-20">
+        <div className="max-w-2xl lg:max-w-3xl space-y-6">
 
           {/* Main Headline */}
-          <h1
-            className="font-sans font-extrabold leading-[1.08] text-white uppercase tracking-tight"
-            style={{ fontSize: "clamp(2.5rem, 5vw, 4.75rem)" }}
-          >
+          <h1 className="font-sans font-extrabold leading-[1.08] text-white uppercase tracking-tight text-[1.85rem] sm:text-[clamp(2.5rem,5vw,4.75rem)]">
             {slide.titleLine1}
             <br />
             <span className="text-[#D4AF37] drop-shadow-md">{slide.titleLine2}</span>
           </h1>
 
           {/* Subtitle */}
-          <p className="text-slate-300 text-base sm:text-lg leading-relaxed font-normal max-w-lg">
+          <p className="text-slate-300 text-sm sm:text-lg leading-relaxed font-normal max-w-lg">
             {slide.desc}
           </p>
 
           {/* CTA Action Buttons */}
-          <div className="flex flex-wrap items-center gap-4 pt-2">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-2">
             <button
               onClick={onOpenBooking}
-              className="px-8 py-4 rounded-xl bg-[#D4AF37] text-black font-extrabold text-xs uppercase tracking-widest hover:bg-white transition-all duration-300 cursor-pointer shadow-lg shadow-[#D4AF37]/20 border-2 border-[#D4AF37]"
+              className="px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-[#D4AF37] text-black font-extrabold text-xs uppercase tracking-widest hover:bg-white transition-all duration-300 cursor-pointer shadow-lg shadow-[#D4AF37]/20 border-2 border-[#D4AF37]"
             >
               Book Appointment
             </button>
 
             <a
               href="tel:+923194415757"
-              className="px-7 py-4 rounded-xl bg-black/50 border border-white/20 text-white font-bold text-xs uppercase tracking-widest hover:border-[#D4AF37] hover:text-[#D4AF37] hover:bg-black/70 transition-all flex items-center gap-2 backdrop-blur-sm"
+              className="px-5 sm:px-7 py-3.5 sm:py-4 rounded-xl bg-black/50 border border-white/20 text-white font-bold text-xs uppercase tracking-widest hover:border-[#D4AF37] hover:text-[#D4AF37] hover:bg-black/70 transition-all flex items-center gap-2 backdrop-blur-sm"
             >
               <svg
                 className="w-4 h-4 text-[#D4AF37]"
@@ -198,11 +208,10 @@ export default function Hero({ onOpenBooking }: HeroProps) {
           <button
             key={idx}
             onClick={() => setCurrentSlide(idx)}
-            className={`transition-all duration-500 cursor-pointer ${
-              idx === currentSlide
-                ? "w-8 h-2.5 bg-[#D4AF37] rounded-full shadow-md shadow-[#D4AF37]/30"
-                : "w-2.5 h-2.5 bg-white/40 hover:bg-white/80 rounded-full"
-            }`}
+            className={`transition-all duration-500 cursor-pointer ${idx === currentSlide
+              ? "w-8 h-2.5 bg-[#D4AF37] rounded-full shadow-md shadow-[#D4AF37]/30"
+              : "w-2.5 h-2.5 bg-white/40 hover:bg-white/80 rounded-full"
+              }`}
             aria-label={`Go to slide ${idx + 1}`}
           />
         ))}

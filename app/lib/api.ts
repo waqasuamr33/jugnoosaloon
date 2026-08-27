@@ -172,7 +172,6 @@ export async function getProducts(search?: string): Promise<ProductItem[]> {
       headers: {
         'Accept': 'application/json',
       },
-      next: { revalidate: 60 },
     });
 
     if (!res.ok) {
@@ -183,7 +182,7 @@ export async function getProducts(search?: string): Promise<ProductItem[]> {
     const json = await res.json();
     return json.success && Array.isArray(json.data) ? json.data : [];
   } catch (error) {
-    console.error('[API] Error in getProducts:', error);
+    console.warn('[API] Unable to fetch products from backend:', error);
     return [];
   }
 }
@@ -202,7 +201,6 @@ export async function getServices(categoryId?: number, search?: string): Promise
       headers: {
         'Accept': 'application/json',
       },
-      next: { revalidate: 60 },
     });
 
     if (!res.ok) {
@@ -213,7 +211,7 @@ export async function getServices(categoryId?: number, search?: string): Promise
     const json = await res.json();
     return json.success && Array.isArray(json.data) ? json.data : [];
   } catch (error) {
-    console.error('[API] Error in getServices:', error);
+    console.warn('[API] Unable to fetch services from backend:', error);
     return [];
   }
 }
@@ -228,7 +226,6 @@ export async function getServiceCategories(): Promise<ServiceCategoryItem[]> {
       headers: {
         'Accept': 'application/json',
       },
-      next: { revalidate: 60 },
     });
 
     if (!res.ok) {
@@ -239,7 +236,7 @@ export async function getServiceCategories(): Promise<ServiceCategoryItem[]> {
     const json = await res.json();
     return json.success && Array.isArray(json.data) ? json.data : [];
   } catch (error) {
-    console.error('[API] Error in getServiceCategories:', error);
+    console.warn('[API] Unable to fetch categories from backend:', error);
     return [];
   }
 }
@@ -469,7 +466,6 @@ export async function getBankAccounts(): Promise<BankAccountItem[]> {
       headers: {
         'Accept': 'application/json',
       },
-      next: { revalidate: 60 },
     });
 
     if (!res.ok) {
@@ -480,7 +476,7 @@ export async function getBankAccounts(): Promise<BankAccountItem[]> {
     const json = await res.json();
     return json.success && Array.isArray(json.data) ? json.data : [];
   } catch (error) {
-    console.error('[API] Error in getBankAccounts:', error);
+    console.warn('[API] Unable to fetch bank accounts from backend (using fallback):', error);
     return [];
   }
 }

@@ -275,15 +275,20 @@ ${formData.message.trim()}`;
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3 pt-2">
-                    <div className="w-9 h-9 rounded-full bg-[#F5E8C7] text-[#856404] flex items-center justify-center font-bold">
+                  <div className="flex items-start space-x-3 pt-2">
+                    <div className="w-9 h-9 rounded-full bg-[#F5E8C7] text-[#856404] flex items-center justify-center font-bold shrink-0 mt-0.5">
                       ✉️
                     </div>
                     <div>
                       <p className="font-bold text-[#111111] uppercase">Email Inquiries</p>
-                      <a href="mailto:jugnussaloon5757@gmail.com" className="text-slate-700 hover:text-[#996515] font-semibold break-all">
-                        jugnussaloon5757@gmail.com
-                      </a>
+                      <div className="flex flex-col space-y-1 mt-0.5">
+                        <a href="mailto:info@jugnussaloon.com" className="text-slate-700 hover:text-[#996515] font-semibold break-all">
+                          info@jugnussaloon.com
+                        </a>
+                        <a href="mailto:jugnussaloon5757@gmail.com" className="text-slate-700 hover:text-[#996515] font-semibold break-all">
+                          jugnussaloon5757@gmail.com
+                        </a>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -17,6 +17,59 @@ interface BookingModalProps {
   initialService?: string;
 }
 
+const FALLBACK_SERVICES: ServiceItem[] = [
+  { id: 1, title: "Signature HD Bridal Makeup", price: 35000, description: "Full bridal makeup with hairstyle, eyelashes and draping." },
+  { id: 2, title: "Party Glam Makeup & Hair", price: 8500, description: "Event makeup, lashes and custom hair styling." },
+  { id: 3, title: "Hydra Deep Cleanse Facial", price: 6500, description: "Hydra-dermabrasion with serum infusion." },
+  { id: 4, title: "Balayage & Ombre Hair Color", price: 18000, description: "Custom hair coloring with protective bond treatment." },
+  { id: 5, title: "Keratin Smooth Treatment", price: 15000, description: "Intense frizz control and protein smoothing." },
+  { id: 6, title: "Gel Nail Extensions & Pedicure", price: 4500, description: "Nail extensions, custom art and spa pedicure." },
+];
+
+const TIME_SLOTS = [
+  "09:30 AM",
+  "10:30 AM",
+  "11:30 AM",
+  "12:30 PM",
+  "02:00 PM",
+  "03:30 PM",
+  "04:30 PM",
+  "05:30 PM",
+  "06:30 PM",
+  "07:30 PM",
+  "08:00 PM",
+];
+
+function getTodayDateString(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function isSlotPassed(slotStr: string, dateStr: string): boolean {
+  if (!dateStr) return false;
+  const todayStr = getTodayDateString();
+  if (dateStr < todayStr) return true;
+  if (dateStr > todayStr) return false;
+
+  const match = slotStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return false;
+
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const period = match[3].toUpperCase();
+
+  if (period === "PM" && hours !== 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+
+  const now = new Date();
+  const slotDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0, 0);
+
+  return slotDate.getTime() <= now.getTime();
+}
+
 export default function BookingModal({
   isOpen,
   onClose,
@@ -26,8 +79,12 @@ export default function BookingModal({
 
   const [step, setStep] = useState<number>(1);
   const [selectedService, setSelectedService] = useState<string>("");
-  const [selectedDate, setSelectedDate] = useState<string>("");
-  const [selectedTime, setSelectedTime] = useState<string>("11:30 AM");
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0];
+  });
+  const [selectedTime, setSelectedTime] = useState<string>("02:00 PM");
   const [clientName, setClientName] = useState<string>("");
   const [clientPhone, setClientPhone] = useState<string>("");
   const [clientEmail, setClientEmail] = useState<string>("");
@@ -93,25 +150,8 @@ export default function BookingModal({
 
     if (isOpen) {
       loadInitialData();
-      // Default to tomorrow's date if empty
-      if (!selectedDate) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        setSelectedDate(tomorrow.toISOString().split("T")[0]);
-      }
-
-      // If user is not authenticated, prompt sign in modal
-      if (!isAuthenticated) {
-        openAuthModal(
-          "Please sign in or create an account to reserve and track your appointment at Jugnu's Saloon.",
-          (loggedCustomer) => {
-            setClientName(loggedCustomer.name);
-            setClientPhone(loggedCustomer.phone_no1);
-          }
-        );
-      }
     }
-  }, [isOpen, initialService, isAuthenticated, openAuthModal, selectedDate]);
+  }, [isOpen, initialService]);
 
   if (!isOpen) return null;
 
@@ -125,12 +165,32 @@ export default function BookingModal({
   };
 
   const handleProceedToStep2 = () => {
+    if (!isAuthenticated && !customer) {
+      openAuthModal(
+        "Please sign in or register your account before booking an appointment.",
+        (loggedCustomer) => {
+          setClientName(loggedCustomer.name);
+          setClientPhone(loggedCustomer.phone_no1);
+          setStep(2);
+        }
+      );
+      return;
+    }
     if (!selectedService) {
       setApiError("Please choose a service to proceed.");
       return;
     }
     if (!selectedDate) {
       setApiError("Please choose your preferred appointment date.");
+      return;
+    }
+    const todayStr = getTodayDateString();
+    if (selectedDate < todayStr) {
+      setApiError("Appointment date cannot be in the past. Please select today or a future date.");
+      return;
+    }
+    if (isSlotPassed(selectedTime, selectedDate)) {
+      setApiError("The chosen time slot has already passed for today. Please select an upcoming slot or a future date.");
       return;
     }
     setApiError("");
@@ -198,7 +258,8 @@ export default function BookingModal({
     }
 
     // Match service ID
-    const matchedService = liveServices.find(
+    const displayServices = liveServices.length > 0 ? liveServices : FALLBACK_SERVICES;
+    const matchedService = displayServices.find(
       (s) =>
         String(s.id) === selectedService ||
         s.title.toLowerCase() === selectedService.toLowerCase()
@@ -256,16 +317,18 @@ export default function BookingModal({
   };
 
   const getSelectedServiceTitle = () => {
-    const matched = liveServices.find(
+    const displayServices = liveServices.length > 0 ? liveServices : FALLBACK_SERVICES;
+    const matched = displayServices.find(
       (s) =>
         String(s.id) === selectedService ||
         s.title.toLowerCase() === selectedService.toLowerCase()
     );
-    return matched ? matched.title : selectedService || "Custom Salon Service";
+    return matched ? matched.title : selectedService || "General Salon Service";
   };
 
   const getSelectedServicePrice = () => {
-    const matched = liveServices.find(
+    const displayServices = liveServices.length > 0 ? liveServices : FALLBACK_SERVICES;
+    const matched = displayServices.find(
       (s) =>
         String(s.id) === selectedService ||
         s.title.toLowerCase() === selectedService.toLowerCase()
@@ -445,6 +508,30 @@ export default function BookingModal({
                 <h4 className="font-sans text-lg font-bold">Select Service &amp; Date</h4>
               </div>
 
+              {!isAuthenticated && (
+                <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-amber-900">
+                    <span className="text-base">🔒</span>
+                    <span className="font-semibold">Sign-in required to book appointments.</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openAuthModal(
+                        "Please sign in or create an account to book your appointment.",
+                        (loggedCustomer) => {
+                          setClientName(loggedCustomer.name);
+                          setClientPhone(loggedCustomer.phone_no1);
+                        }
+                      )
+                    }
+                    className="px-3 py-1.5 rounded-xl bg-[#111111] text-[#D4AF37] font-bold text-[11px] uppercase tracking-wider hover:bg-[#D4AF37] hover:text-black transition-colors shrink-0"
+                  >
+                    Sign In / Register
+                  </button>
+                </div>
+              )}
+
               {/* Service Selection */}
               <div>
                 <label className="block text-xs uppercase tracking-wider text-slate-700 font-bold mb-1.5">
@@ -455,12 +542,7 @@ export default function BookingModal({
                   onChange={(e) => setSelectedService(e.target.value)}
                   className="w-full p-3.5 rounded-xl bg-[#FAFAFA] border border-slate-300 text-[#111111] focus:border-[#D4AF37] focus:outline-none text-xs font-medium"
                 >
-                  <option value="">
-                    {loadingServices
-                      ? "-- Loading Live API Services... --"
-                      : "-- Select A Service --"}
-                  </option>
-                  {liveServices.map((service) => {
+                  {(liveServices.length > 0 ? liveServices : FALLBACK_SERVICES).map((service) => {
                     const finalPrice = service.discounted_price || service.price;
                     const discountBadge =
                       service.discount && service.discount > 0
@@ -484,8 +566,19 @@ export default function BookingModal({
                   </label>
                   <input
                     type="date"
+                    min={getTodayDateString()}
                     value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
+                    onChange={(e) => {
+                      const newDate = e.target.value;
+                      setSelectedDate(newDate);
+                      setApiError("");
+                      if (isSlotPassed(selectedTime, newDate)) {
+                        const nextValid = TIME_SLOTS.find((s) => !isSlotPassed(s, newDate));
+                        if (nextValid) {
+                          setSelectedTime(nextValid);
+                        }
+                      }
+                    }}
                     className="w-full p-3.5 rounded-xl bg-[#FAFAFA] border border-slate-300 text-[#111111] focus:border-[#D4AF37] focus:outline-none text-xs font-medium"
                     required
                   />
@@ -497,17 +590,29 @@ export default function BookingModal({
                   </label>
                   <select
                     value={selectedTime}
-                    onChange={(e) => setSelectedTime(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedTime(e.target.value);
+                      setApiError("");
+                    }}
                     className="w-full p-3.5 rounded-xl bg-[#FAFAFA] border border-slate-300 text-[#111111] focus:border-[#D4AF37] focus:outline-none text-xs font-medium"
                   >
-                    <option value="09:30 AM">09:30 AM</option>
-                    <option value="11:30 AM">11:30 AM</option>
-                    <option value="02:00 PM">02:00 PM</option>
-                    <option value="04:30 PM">04:30 PM</option>
-                    <option value="06:30 PM">06:30 PM</option>
+                    {TIME_SLOTS.map((slot) => {
+                      const passed = isSlotPassed(slot, selectedDate);
+                      return (
+                        <option key={slot} value={slot} disabled={passed}>
+                          {slot} {passed ? "(Passed for Today)" : ""}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>
+
+              {selectedDate === getTodayDateString() && TIME_SLOTS.every((s) => isSlotPassed(s, selectedDate)) && (
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium text-center">
+                  ⚠️ All appointment slots for today have passed. Please select a future date.
+                </div>
+              )}
 
               {apiError && (
                 <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium text-center">
@@ -794,25 +899,28 @@ export default function BookingModal({
                   disabled={isSubmitting}
                   className="flex-1 py-3.5 rounded-xl bg-[#D4AF37] text-black font-bold text-xs uppercase tracking-widest hover:bg-[#111111] hover:text-white transition-all cursor-pointer shadow-md disabled:opacity-50"
                 >
-                  {isSubmitting ? "Submitting..." : "Confirm & Complete Reservation"}
+                  {isSubmitting ? "Submitting Request..." : "Submit Reservation Request"}
                 </button>
               </div>
             </form>
           )}
 
-          {/* STEP 4: Appointment Confirmed */}
+          {/* STEP 4: Appointment Submitted (Approval Pending) */}
           {step === 4 && (
             <div className="text-center space-y-4 py-4">
-              <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto border-2 border-emerald-500">
-                ✓
+              <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-3xl mx-auto border-2 border-amber-400">
+                ⏳
               </div>
 
               <div className="space-y-1">
+                <div className="inline-block px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 font-bold text-[10px] uppercase tracking-widest mb-1">
+                  Status: Approval Pending
+                </div>
                 <h4 className="font-sans text-xl font-extrabold uppercase text-[#111111]">
-                  APPOINTMENT CONFIRMED!
+                  BOOKING REQUEST SUBMITTED
                 </h4>
                 <p className="text-xs text-slate-600 font-normal">
-                  Thank you, <span className="font-bold text-[#111111]">{clientName}</span>. Your appointment has been registered with Jugnu&apos;s Saloon.
+                  Thank you, <span className="font-bold text-[#111111]">{clientName}</span>. Your appointment request has been recorded and is currently under review.
                 </p>
               </div>
 
@@ -827,7 +935,7 @@ export default function BookingModal({
                   <span className="font-bold">{getSelectedServiceTitle()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Date &amp; Time:</span>
+                  <span className="text-slate-500">Requested Slot:</span>
                   <span className="font-bold">
                     {selectedDate} at {selectedTime}
                   </span>
@@ -836,24 +944,48 @@ export default function BookingModal({
                   <span className="text-slate-500">Client Phone:</span>
                   <span className="font-bold">{clientPhone}</span>
                 </div>
-                <div className="flex justify-between border-t border-slate-200 pt-2">
-                  <span className="text-slate-500">Payment Slip:</span>
-                  <span className="font-bold text-amber-700">
-                    {receiptFile ? "Uploaded (Under Verification)" : "Pending Confirmation"}
+                <div className="flex justify-between border-t border-slate-200 pt-2 items-center">
+                  <span className="text-slate-500">Booking Status:</span>
+                  <span className="font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300 text-[10px] uppercase tracking-wider">
+                    ⏳ Approval Pending
                   </span>
                 </div>
+                {receiptFile && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Payment Slip:</span>
+                    <span className="font-bold text-emerald-700">Uploaded (Under Review)</span>
+                  </div>
+                )}
               </div>
 
-              <p className="text-[11px] text-slate-500 font-normal max-w-xs mx-auto">
-                Our team will contact you on WhatsApp / Phone to confirm your arrival time.
-              </p>
+              <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 max-w-sm mx-auto">
+                <p className="text-xs text-amber-900 font-medium leading-relaxed">
+                  Our team will contact you on <strong>WhatsApp / Phone ASAP</strong> to confirm your slot and arrival time.
+                </p>
+              </div>
 
-              <button
-                onClick={resetAndClose}
-                className="w-full py-3.5 rounded-xl bg-[#111111] text-white font-bold text-xs uppercase tracking-widest hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer"
-              >
-                Close Receipt
-              </button>
+              <div className="space-y-2 max-w-sm mx-auto">
+                <a
+                  href={`https://wa.me/923194415757?text=${encodeURIComponent(
+                    `Hello Jugnu's Saloon! I just submitted an appointment request (Ref: ${bookingRef}) for *${getSelectedServiceTitle()}* on *${selectedDate}* at *${selectedTime}*. My Name: *${clientName}*. Please confirm my booking!`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3.5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-xs uppercase tracking-widest transition-all cursor-pointer shadow-md flex items-center justify-center space-x-2"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.764.459 3.487 1.332 5.006l-1.417 5.176 5.297-1.389c1.468.802 3.129 1.224 4.775 1.225h.004c5.505 0 9.988-4.478 9.989-9.984 0-2.669-1.038-5.178-2.925-7.064s-4.395-2.924-7.065-2.924zm0 18.232h-.003c-1.494 0-2.962-.401-4.246-1.161l-.305-.181-3.158.828.842-3.078-.199-.316c-.836-1.33-1.278-2.871-1.278-4.45 0-4.526 3.682-8.209 8.212-8.209 2.194 0 4.256.855 5.807 2.407s2.406 3.614 2.406 5.808c-.001 4.527-3.683 8.209-8.21 8.209zm4.506-6.148c-.247-.124-1.462-.722-1.689-.804-.227-.082-.392-.124-.557.124-.165.247-.641.804-.785.969-.144.165-.289.185-.536.062-.247-.124-1.043-.385-1.987-1.227-.735-.656-1.232-1.467-1.376-1.714-.144-.247-.015-.38.109-.503.111-.11.247-.289.371-.433.124-.144.165-.247.247-.412.082-.165.041-.309-.021-.433-.062-.124-.557-1.341-.763-1.836-.201-.482-.405-.417-.557-.425-.144-.008-.309-.009-.474-.009s-.433.062-.659.309c-.227.247-.866.846-.866 2.063s.886 2.392 1.01 2.557c.124.165 1.744 2.663 4.225 3.734.59.255 1.051.407 1.411.521.593.188 1.132.161 1.558.098.475-.07 1.462-.598 1.669-1.176.206-.578.206-1.073.144-1.176-.062-.103-.227-.165-.474-.289z" />
+                  </svg>
+                  <span>Chat on WhatsApp</span>
+                </a>
+
+                <button
+                  onClick={resetAndClose}
+                  className="w-full py-3.5 rounded-xl bg-[#111111] text-white font-bold text-xs uppercase tracking-widest hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer"
+                >
+                  Close Receipt
+                </button>
+              </div>
             </div>
           )}
         </div>
