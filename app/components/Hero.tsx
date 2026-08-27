@@ -10,7 +10,7 @@ interface HeroProps {
 const slides = [
   {
     id: 1,
-    titleLine1: "WHERE BEAUTY",
+    titleLine1: "WHEREeeeee BEAUTY",
     titleLine2: "MEETS ARTISTRY",
     desc: "We're a full-service beauty saloon dedicated to helping you look and feel your best.",
     image: "/images/hero-2.jpg",
@@ -82,9 +82,8 @@ export default function Hero({ onOpenBooking }: HeroProps) {
       {slides.map((s, index) => (
         <div
           key={s.id}
-          className={`absolute inset-0 z-0 transition-opacity duration-1000 ease-in-out ${
-            index === currentSlide ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none"
-          }`}
+          className={`absolute inset-0 z-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none"
+            }`}
           style={{ transitionProperty: "opacity, transform" }}
         >
           {/* Desktop Image */}
