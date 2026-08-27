@@ -3,10 +3,9 @@ const { parse } = require('url');
 const next = require('next');
 
 const dev = process.env.NODE_ENV !== 'production';
-const hostname = process.env.HOSTNAME || '0.0.0.0';
-const port = parseInt(process.env.PORT || '3000', 10);
+const port = process.env.PORT || 3000;
 
-const app = next({ dev, hostname, port });
+const app = next({ dev });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
@@ -24,7 +23,7 @@ app.prepare().then(() => {
       console.error('Server error:', err);
       process.exit(1);
     })
-    .listen(port, hostname, () => {
-      console.log(`> Next.js production server ready on http://${hostname}:${port}`);
+    .listen(port, () => {
+      console.log(`> Next.js production server ready on port ${port}`);
     });
 });
