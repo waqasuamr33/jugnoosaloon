@@ -271,6 +271,7 @@ export default function BookingModal({
     const serviceTitle = matchedService ? matchedService.title : selectedService;
 
     const payload = {
+      order_type: "Online",
       customer_name: clientName.trim(),
       customer_phone: clientPhone.trim(),
       customer_email: clientEmail.trim() || undefined,

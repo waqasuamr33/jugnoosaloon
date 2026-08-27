@@ -38,6 +38,7 @@ export interface ServiceItem {
 }
 
 export interface AppointmentPayload {
+  order_type?: string;
   customer_name: string;
   customer_phone: string;
   customer_email?: string;
@@ -301,8 +302,11 @@ export async function getGalleries(category?: string, search?: string): Promise<
  */
 export async function bookAppointment(payload: AppointmentPayload): Promise<AppointmentResponse> {
   try {
+    const orderType = payload.order_type || 'Online';
+
     if (payload.receipt_image && typeof window !== 'undefined' && payload.receipt_image instanceof File) {
       const formData = new FormData();
+      formData.append('order_type', orderType);
       formData.append('customer_name', payload.customer_name);
       formData.append('customer_phone', payload.customer_phone);
       if (payload.customer_email) formData.append('customer_email', payload.customer_email);
@@ -339,7 +343,10 @@ export async function bookAppointment(payload: AppointmentPayload): Promise<Appo
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(jsonPayload),
+      body: JSON.stringify({
+        order_type: orderType,
+        ...jsonPayload,
+      }),
     });
 
     const json = await res.json();

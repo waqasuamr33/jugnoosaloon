@@ -244,6 +244,7 @@ export default function BookingPage() {
     const serviceTitle = matchedService ? matchedService.title : selectedService;
 
     const payload = {
+      order_type: "Online",
       customer_name: clientName.trim(),
       customer_phone: clientPhone.trim(),
       customer_email: clientEmail.trim() || undefined,

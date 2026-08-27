@@ -355,35 +355,17 @@ export default function AuthModal() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#111111]">
-                    Father / Guardian Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Optional"
-                    value={signupForm.father_name}
-                    onChange={(e) => setSignupForm({ ...signupForm, father_name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F8F6] border border-slate-200 text-xs text-[#111111] placeholder:text-slate-400 focus:outline-none focus:border-[#D4AF37] transition-all"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#111111]">
-                    Membership Card Type
-                  </label>
-                  <select
-                    value={signupForm.card_type}
-                    onChange={(e) => setSignupForm({ ...signupForm, card_type: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F8F6] border border-slate-200 text-xs text-[#111111] focus:outline-none focus:border-[#D4AF37] transition-all"
-                  >
-                    <option value="No Card">No Card</option>
-                    <option value="Silver">Silver Club</option>
-                    <option value="Gold">Gold VIP</option>
-                    <option value="Platinum">Platinum Elite</option>
-                  </select>
-                </div>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#111111]">
+                  Father / Guardian Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Optional"
+                  value={signupForm.father_name}
+                  onChange={(e) => setSignupForm({ ...signupForm, father_name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F8F6] border border-slate-200 text-xs text-[#111111] placeholder:text-slate-400 focus:outline-none focus:border-[#D4AF37] transition-all"
+                />
               </div>
 
               <div className="space-y-1">
