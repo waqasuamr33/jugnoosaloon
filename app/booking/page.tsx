@@ -255,7 +255,7 @@ export default function BookingPage() {
             id: 3,
             bank_name: "JazzCash / EasyPaisa",
             account_title: "Jugnu's Saloon Services",
-            account_no: "0300 8476592",
+            account_no: "+92 300 8476592",
             branch: "Mobile Wallet Direct",
           },
         ];
@@ -511,7 +511,7 @@ export default function BookingPage() {
                   </label>
                   <input
                     type="tel"
-                    placeholder="0300 1234567"
+                    placeholder="+92 300 1234567"
                     value={clientPhone}
                     onChange={(e) => setClientPhone(e.target.value)}
                     className="w-full p-3.5 rounded-xl bg-[#FAFAFA] border border-slate-300 text-xs font-medium text-[#111111] focus:border-[#D4AF37] focus:outline-none"

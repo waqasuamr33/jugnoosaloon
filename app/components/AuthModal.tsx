@@ -226,7 +226,7 @@ export default function AuthModal() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. 03194415757 or ayesha_khan"
+                  placeholder="e.g. +92 319 4415757 or ayesha_khan"
                   value={loginForm.username}
                   onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl bg-[#F8F8F6] border border-slate-200 text-sm text-[#111111] placeholder:text-slate-400 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
@@ -315,7 +315,7 @@ export default function AuthModal() {
                   </label>
                   <input
                     type="tel"
-                    placeholder="e.g. 03123456789"
+                    placeholder="e.g. +92 312 3456789"
                     value={signupForm.phone_no1}
                     onChange={(e) => setSignupForm({ ...signupForm, phone_no1: e.target.value })}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F8F6] border border-slate-200 text-xs text-[#111111] placeholder:text-slate-400 focus:outline-none focus:border-[#D4AF37] transition-all"

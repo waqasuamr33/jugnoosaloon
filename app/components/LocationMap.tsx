@@ -108,10 +108,10 @@ export default function LocationMap() {
                 <div>
                   <h4 className="text-xs uppercase font-bold text-slate-400">Phone & Appointments</h4>
                   <a
-                    href="tel:03194415757"
+                    href="tel:+923194415757"
                     className="text-base font-extrabold text-[#D4AF37] hover:underline block mt-0.5"
                   >
-                    0319 4415757
+                    +92 319 4415757
                   </a>
                 </div>
               </div>

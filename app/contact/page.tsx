@@ -184,7 +184,7 @@ ${formData.message.trim()}`;
                       </label>
                       <input
                         type="tel"
-                        placeholder="0300 1234567"
+                        placeholder="+92 300 1234567"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         className="w-full p-3.5 rounded-xl bg-white border border-slate-300 text-xs text-[#111111] focus:border-[#D4AF37] focus:outline-none font-medium"
@@ -269,8 +269,8 @@ ${formData.message.trim()}`;
                     </div>
                     <div>
                       <p className="font-bold text-[#111111] uppercase">Phone & WhatsApp Hotline</p>
-                      <a href="tel:03194415757" className="text-slate-700 hover:text-[#996515] font-semibold text-sm">
-                        0319 4415757
+                      <a href="tel:+923194415757" className="text-slate-700 hover:text-[#996515] font-semibold text-sm">
+                        +92 319 4415757
                       </a>
                     </div>
                   </div>
