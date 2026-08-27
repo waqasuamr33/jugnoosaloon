@@ -17,7 +17,13 @@ export const metadata: Metadata = {
     "Beauty Lounge",
     "Book Online",
   ],
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
+
 
 import { AuthProvider } from "./context/AuthContext";
 import AuthModal from "./components/AuthModal";

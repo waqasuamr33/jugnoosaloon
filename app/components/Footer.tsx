@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -7,7 +8,21 @@ interface FooterProps {
   onOpenBooking?: () => void;
 }
 
+interface BusinessHours {
+  weekday_text: string[];
+  open_now: boolean | null;
+  is_live: boolean;
+}
+
 export default function Footer({ onOpenBooking }: FooterProps) {
+  const [hours, setHours] = useState<BusinessHours | null>(null);
+
+  useEffect(() => {
+    fetch("/api/business-hours")
+      .then((r) => r.json())
+      .then((data: BusinessHours) => setHours(data))
+      .catch(() => setHours(null));
+  }, []);
   return (
     <footer id="contact" className="bg-[#0A0A0B] border-t border-[#D4AF37]/20 pt-20 pb-12 text-slate-300">
       <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -33,20 +48,7 @@ export default function Footer({ onOpenBooking }: FooterProps) {
             </div>
           </div>
 
-          {/* Newsletter Box */}
-          <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3">
-            <input
-              type="email"
-              placeholder="Enter your email for VIP offers..."
-              className="px-4 py-3 rounded-lg bg-[#141417] border border-white/10 text-white placeholder-slate-500 text-xs focus:border-[#D4AF37] focus:outline-none min-w-[280px]"
-            />
-            <button
-              onClick={() => alert("Thank you for subscribing to Jugnu VIP Salon Newsletter!")}
-              className="px-6 py-3 bg-[#D4AF37] hover:bg-[#F3E5AB] text-black font-bold text-xs uppercase tracking-widest transition-colors cursor-pointer"
-            >
-              Subscribe
-            </button>
-          </div>
+
         </div>
 
         {/* Footer Navigation Columns */}
@@ -72,10 +74,32 @@ export default function Footer({ onOpenBooking }: FooterProps) {
                 </a>
               </div>
               <div className="pt-2 border-t border-white/10">
-                <p className="text-[11px] text-slate-300">
-                  <span className="text-[#D4AF37] font-semibold">Opening Hours:</span><br />
-                  Monday – Sunday: 9:00 AM – 9:00 PM
-                </p>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[#D4AF37] font-semibold text-[11px]">Opening Hours:</span>
+                  {hours?.open_now === true && (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-400/10 border border-emerald-400/30 px-1.5 py-0.5 rounded-full">
+                      <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+                      Open
+                    </span>
+                  )}
+                  {hours?.open_now === false && (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-red-400 bg-red-400/10 border border-red-400/30 px-1.5 py-0.5 rounded-full">
+                      <span className="w-1 h-1 rounded-full bg-red-400" />
+                      Closed
+                    </span>
+                  )}
+                </div>
+                {hours && hours.weekday_text.length > 1 ? (
+                  <ul className="space-y-0.5">
+                    {hours.weekday_text.map((line, i) => (
+                      <li key={i} className="text-[10px] text-slate-300">{line}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-[11px] text-slate-300">
+                    {hours?.weekday_text[0] ?? "Monday – Sunday: 9:00 AM – 9:00 PM"}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -170,6 +194,9 @@ export default function Footer({ onOpenBooking }: FooterProps) {
                 </svg>
                 <a href="tel:+923194415757" className="hover:text-[#D4AF37] font-semibold text-white">
                   +92 319 4415757
+                </a>
+                <a href="tel:+920546558633" className="hover:text-[#D4AF37] font-semibold text-white">
+                  +92 054 6558633
                 </a>
               </p>
 

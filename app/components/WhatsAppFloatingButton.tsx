@@ -1,19 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function WhatsAppFloatingButton() {
   const [isOpen, setIsOpen] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
-
-  // Auto-show a friendly teaser after 3 seconds, then hide
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowTooltip(true);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   const phoneNumber = "923194415757";
   const defaultMessage = encodeURIComponent(
@@ -80,22 +70,8 @@ export default function WhatsAppFloatingButton() {
         </div>
       )}
 
-      {/* Floating Teaser / Tooltip (when closed) */}
-      {!isOpen && showTooltip && (
-        <div className="mb-2 bg-white text-[#111111] px-4 py-2 rounded-full shadow-lg border border-slate-200 text-xs font-semibold flex items-center space-x-2 animate-bounce">
-          <span>Chat with us on WhatsApp!</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowTooltip(false);
-            }}
-            className="text-slate-400 hover:text-black ml-1 text-xs"
-            aria-label="Dismiss tooltip"
-          >
-            ✕
-          </button>
-        </div>
-      )}
+
+
 
       {/* Floating Round Action Button */}
       <div className="relative group">
@@ -105,7 +81,6 @@ export default function WhatsAppFloatingButton() {
         <button
           onClick={() => {
             setIsOpen(!isOpen);
-            setShowTooltip(false);
           }}
           className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-tr from-[#20ba59] to-[#25D366] text-white flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 border-2 border-white focus:outline-none focus:ring-4 focus:ring-[#25D366]/30 cursor-pointer"
           aria-label="Contact us on WhatsApp"

@@ -1,6 +1,22 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
+interface BusinessHours {
+  weekday_text: string[];
+  open_now: boolean | null;
+  is_live: boolean;
+}
+
 export default function LocationMap() {
+  const [hours, setHours] = useState<BusinessHours | null>(null);
+
+  useEffect(() => {
+    fetch("/api/business-hours")
+      .then((r) => r.json())
+      .then((data: BusinessHours) => setHours(data))
+      .catch(() => setHours(null));
+  }, []);
   const mapLink = "https://maps.app.goo.gl/HfbmMwJ6ugTEAmPv8";
   const embedUrl =
     "https://maps.google.com/maps?q=Jugnu+Saloon+Phalia&t=&z=15&ie=UTF8&iwloc=&output=embed";
@@ -129,10 +145,32 @@ export default function LocationMap() {
                   </svg>
                 </div>
                 <div>
-                  <h4 className="text-xs uppercase font-bold text-slate-400">Working Hours</h4>
-                  <p className="text-xs font-semibold text-slate-200 mt-0.5">
-                    Monday – Sunday: 9:00 AM – 9:00 PM
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs uppercase font-bold text-slate-400">Working Hours</h4>
+                    {hours?.open_now === true && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-400/10 border border-emerald-400/30 px-2 py-0.5 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        Open Now
+                      </span>
+                    )}
+                    {hours?.open_now === false && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-red-400 bg-red-400/10 border border-red-400/30 px-2 py-0.5 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                        Closed
+                      </span>
+                    )}
+                  </div>
+                  {hours && hours.weekday_text.length > 1 ? (
+                    <ul className="mt-1 space-y-0.5">
+                      {hours.weekday_text.map((line, i) => (
+                        <li key={i} className="text-[11px] font-semibold text-slate-200">{line}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs font-semibold text-slate-200 mt-0.5">
+                      {hours?.weekday_text[0] ?? "Monday – Sunday: 9:00 AM – 9:00 PM"}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

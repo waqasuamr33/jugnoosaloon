@@ -268,9 +268,12 @@ ${formData.message.trim()}`;
                       📞
                     </div>
                     <div>
-                      <p className="font-bold text-[#111111] uppercase">Phone & WhatsApp Hotline</p>
-                      <a href="tel:+923194415757" className="text-slate-700 hover:text-[#996515] font-semibold text-sm">
+                      <p className="font-bold text-[#111111] uppercase">Phone &amp; WhatsApp Hotline</p>
+                      <a href="tel:+923194415757" className="text-slate-700 hover:text-[#996515] font-semibold text-sm block">
                         +92 319 4415757
+                      </a>
+                      <a href="tel:+920546558633" className="text-slate-700 hover:text-[#996515] font-semibold text-sm block">
+                        +92 054 6558633
                       </a>
                     </div>
                   </div>

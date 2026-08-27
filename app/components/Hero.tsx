@@ -10,7 +10,7 @@ interface HeroProps {
 const slides = [
   {
     id: 1,
-    titleLine1: "WHEREeeeee BEAUTY",
+    titleLine1: "WHERE BEAUTY",
     titleLine2: "MEETS ARTISTRY",
     desc: "We're a full-service beauty saloon dedicated to helping you look and feel your best.",
     image: "/images/hero-2.jpg",
