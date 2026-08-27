@@ -5,8 +5,10 @@ import Image from "next/image";
 import {
   bookAppointment,
   getServices,
+  getServiceCategories,
   getBankAccounts,
   ServiceItem,
+  ServiceCategoryItem,
   BankAccountItem,
 } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
@@ -78,7 +80,7 @@ export default function BookingModal({
   const { customer, isAuthenticated, openAuthModal } = useAuth();
 
   const [step, setStep] = useState<number>(1);
-  const [selectedService, setSelectedService] = useState<string>("");
+  const [selectedServices, setSelectedServices] = useState<number[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -98,6 +100,9 @@ export default function BookingModal({
   const [bankAccounts, setBankAccounts] = useState<BankAccountItem[]>([]);
   const [loadingBanks, setLoadingBanks] = useState<boolean>(true);
   const [copiedAccount, setCopiedAccount] = useState<string | null>(null);
+  const [serviceSearch, setServiceSearch] = useState<string>("");
+  const [liveCategories, setLiveCategories] = useState<ServiceCategoryItem[]>([]);
+  const [expandedCategory, setExpandedCategory] = useState<number | null>(null);
 
   // Autofill client details when customer logs in or is authenticated
   useEffect(() => {
@@ -113,10 +118,16 @@ export default function BookingModal({
       try {
         setLoadingServices(true);
         setLoadingBanks(true);
-        const [servicesData, banksData] = await Promise.all([
+        const [servicesData, banksData, categoriesData] = await Promise.all([
           getServices(),
           getBankAccounts(),
+          getServiceCategories(),
         ]);
+
+        if (categoriesData && categoriesData.length > 0) {
+          setLiveCategories(categoriesData);
+          setExpandedCategory(categoriesData[0].id); // auto-open first
+        }
 
         if (servicesData && servicesData.length > 0) {
           setLiveServices(servicesData);
@@ -128,12 +139,8 @@ export default function BookingModal({
                 String(s.id) === initialService
             );
             if (matched) {
-              setSelectedService(String(matched.id));
-            } else {
-              setSelectedService(initialService);
+              setSelectedServices([matched.id]);
             }
-          } else {
-            setSelectedService(String(servicesData[0].id));
           }
         }
 
@@ -176,8 +183,8 @@ export default function BookingModal({
       );
       return;
     }
-    if (!selectedService) {
-      setApiError("Please choose a service to proceed.");
+    if (selectedServices.length === 0) {
+      setApiError("Please select at least one service to proceed.");
       return;
     }
     if (!selectedDate) {
@@ -257,18 +264,10 @@ export default function BookingModal({
       }
     }
 
-    // Match service ID
+    // Build service list from selected IDs
     const displayServices = liveServices.length > 0 ? liveServices : FALLBACK_SERVICES;
-    const matchedService = displayServices.find(
-      (s) =>
-        String(s.id) === selectedService ||
-        s.title.toLowerCase() === selectedService.toLowerCase()
-    );
-
-    const serviceIdNum = matchedService
-      ? matchedService.id
-      : parseInt(selectedService, 10) || 1;
-    const serviceTitle = matchedService ? matchedService.title : selectedService;
+    const selectedServiceObjects = displayServices.filter((s) => selectedServices.includes(s.id));
+    const serviceTitle = selectedServiceObjects.map((s) => s.title).join(", ") || "General Salon Service";
 
     const payload = {
       order_type: "Online",
@@ -277,10 +276,10 @@ export default function BookingModal({
       customer_email: clientEmail.trim() || undefined,
       appointment_date: selectedDate || new Date().toISOString().split("T")[0],
       start_time: formattedTime,
-      service_ids: [serviceIdNum],
+      service_ids: selectedServices,
       notes: notes.trim()
-        ? `Service: ${serviceTitle} | Notes: ${notes.trim()}`
-        : `Service Requested: ${serviceTitle}`,
+        ? `Services: ${serviceTitle} | Notes: ${notes.trim()}`
+        : `Services Requested: ${serviceTitle}`,
       receipt_image: receiptFile,
     };
 
@@ -311,34 +310,27 @@ export default function BookingModal({
 
   const resetAndClose = () => {
     setStep(1);
+    setSelectedServices([]);
+    setServiceSearch("");
+    setExpandedCategory(null);
     setBookingRef("");
     setApiError("");
     setReceiptFile(null);
     onClose();
   };
 
-  const getSelectedServiceTitle = () => {
+  const getSelectedServiceTitles = () => {
     const displayServices = liveServices.length > 0 ? liveServices : FALLBACK_SERVICES;
-    const matched = displayServices.find(
-      (s) =>
-        String(s.id) === selectedService ||
-        s.title.toLowerCase() === selectedService.toLowerCase()
-    );
-    return matched ? matched.title : selectedService || "General Salon Service";
+    const matched = displayServices.filter((s) => selectedServices.includes(s.id));
+    return matched.length > 0 ? matched.map((s) => s.title).join(", ") : "General Salon Service";
   };
 
-  const getSelectedServicePrice = () => {
+  const getSelectedServicesTotal = () => {
     const displayServices = liveServices.length > 0 ? liveServices : FALLBACK_SERVICES;
-    const matched = displayServices.find(
-      (s) =>
-        String(s.id) === selectedService ||
-        s.title.toLowerCase() === selectedService.toLowerCase()
-    );
-    if (matched) {
-      const finalPrice = matched.discounted_price || matched.price;
-      return `Rs. ${finalPrice.toLocaleString()}`;
-    }
-    return "Rs. 2,500";
+    const matched = displayServices.filter((s) => selectedServices.includes(s.id));
+    if (matched.length === 0) return "Rs. 0";
+    const total = matched.reduce((sum, s) => sum + (s.discounted_price || s.price), 0);
+    return `Rs. ${total.toLocaleString()}`;
   };
 
   // Fallback bank accounts if backend API returns an empty array
@@ -533,30 +525,256 @@ export default function BookingModal({
                 </div>
               )}
 
-              {/* Service Selection */}
+              {/* Service Selection — Category Accordion + Search */}
               <div>
-                <label className="block text-xs uppercase tracking-wider text-slate-700 font-bold mb-1.5">
-                  Choose Service
-                </label>
-                <select
-                  value={selectedService}
-                  onChange={(e) => setSelectedService(e.target.value)}
-                  className="w-full p-3.5 rounded-xl bg-[#FAFAFA] border border-slate-300 text-[#111111] focus:border-[#D4AF37] focus:outline-none text-xs font-medium"
-                >
-                  {(liveServices.length > 0 ? liveServices : FALLBACK_SERVICES).map((service) => {
-                    const finalPrice = service.discounted_price || service.price;
-                    const discountBadge =
-                      service.discount && service.discount > 0
-                        ? ` (${service.discount}% OFF)`
-                        : "";
-                    const optionText = `${service.title} - Rs. ${finalPrice.toLocaleString()}${discountBadge}`;
-                    return (
-                      <option key={service.id} value={String(service.id)}>
-                        {optionText}
-                      </option>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs uppercase tracking-wider text-slate-700 font-bold">
+                    Choose Services
+                  </label>
+                  {selectedServices.length > 0 && (
+                    <span className="text-[10px] font-bold text-[#996515] uppercase tracking-wider">
+                      {selectedServices.length} selected
+                    </span>
+                  )}
+                </div>
+
+                {/* Search bar */}
+                <div className="relative mb-3">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Search services..."
+                    value={serviceSearch}
+                    onChange={(e) => setServiceSearch(e.target.value)}
+                    className="w-full pl-8 pr-8 py-2.5 rounded-xl bg-[#FAFAFA] border border-slate-200 text-[#111111] placeholder-slate-400 focus:border-[#D4AF37] focus:outline-none text-xs font-medium"
+                  />
+                  {serviceSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setServiceSearch("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm leading-none"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {loadingServices ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-11 rounded-xl bg-slate-100 animate-pulse" />
+                    ))}
+                  </div>
+                ) : (() => {
+                  const allServices = liveServices.length > 0 ? liveServices : FALLBACK_SERVICES;
+
+                  // --- SEARCH MODE: flat filtered list ---
+                  if (serviceSearch.trim()) {
+                    const filtered = allServices.filter((s) =>
+                      s.title.toLowerCase().includes(serviceSearch.toLowerCase())
                     );
-                  })}
-                </select>
+                    return filtered.length === 0 ? (
+                      <div className="py-8 text-center text-slate-400 text-xs font-medium">
+                        No services found for &ldquo;{serviceSearch}&rdquo;
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                        {filtered.map((service) => {
+                          const finalPrice = service.discounted_price || service.price;
+                          const isChecked = selectedServices.includes(service.id);
+                          return (
+                            <button
+                              key={service.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedServices((prev) =>
+                                  prev.includes(service.id)
+                                    ? prev.filter((id) => id !== service.id)
+                                    : [...prev, service.id]
+                                );
+                                setApiError("");
+                              }}
+                              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-all cursor-pointer ${
+                                isChecked
+                                  ? "bg-[#111111] border-[#D4AF37] text-white shadow-md"
+                                  : "bg-[#FAFAFA] border-slate-200 text-[#111111] hover:border-[#D4AF37] hover:bg-slate-50"
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                  isChecked ? "bg-[#D4AF37] border-[#D4AF37]" : "border-slate-300"
+                                }`}>
+                                  {isChecked && (
+                                    <svg className="w-2.5 h-2.5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  )}
+                                </span>
+                                <div>
+                                  <span className="text-xs font-semibold leading-tight block">{service.title}</span>
+                                  {service.category && (
+                                    <span className="text-[9px] text-slate-400 font-medium">{service.category.title}</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0 ml-2">
+                                <span className={`text-xs font-bold font-mono ${
+                                  isChecked ? "text-[#D4AF37]" : "text-[#996515]"
+                                }`}>
+                                  Rs. {finalPrice.toLocaleString()}
+                                </span>
+                                {!!service.discount && service.discount > 0 && (
+                                  <span className="block text-[9px] text-emerald-400 font-bold">{service.discount}% OFF</span>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  }
+
+                  // --- BROWSE MODE: category accordion ---
+                  // Build category list: live categories + an "Uncategorized" bucket
+                  const categorized = new Set(allServices.map((s) => s.category?.id).filter(Boolean));
+                  const uncategorized = allServices.filter((s) => !s.category?.id);
+
+                  // Ordered: live categories first, then uncategorized if any
+                  const categoryList: { id: number; title: string; services: ServiceItem[] }[] = [];
+
+                  if (liveCategories.length > 0) {
+                    liveCategories.forEach((cat) => {
+                      const catServices = allServices.filter((s) => s.category?.id === cat.id);
+                      if (catServices.length > 0) {
+                        categoryList.push({ id: cat.id, title: cat.title, services: catServices });
+                      }
+                    });
+                  } else {
+                    // Fallback: group by category from service data
+                    const seen = new Map<number, { id: number; title: string; services: ServiceItem[] }>();
+                    allServices.forEach((s) => {
+                      if (s.category) {
+                        if (!seen.has(s.category.id)) seen.set(s.category.id, { id: s.category.id, title: s.category.title, services: [] });
+                        seen.get(s.category.id)!.services.push(s);
+                      }
+                    });
+                    seen.forEach((v) => categoryList.push(v));
+                  }
+
+                  if (uncategorized.length > 0) {
+                    categoryList.push({ id: -1, title: "Other Services", services: uncategorized });
+                  }
+
+                  if (categoryList.length === 0) {
+                    return <div className="py-6 text-center text-slate-400 text-xs">No services available.</div>;
+                  }
+
+                  return (
+                    <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                      {categoryList.map((cat) => {
+                        const isOpen = expandedCategory === cat.id;
+                        const selectedInCat = cat.services.filter((s) => selectedServices.includes(s.id)).length;
+                        return (
+                          <div key={cat.id} className="rounded-xl border border-slate-200 overflow-hidden">
+                            {/* Category Header */}
+                            <button
+                              type="button"
+                              onClick={() => setExpandedCategory(isOpen ? null : cat.id)}
+                              className={`w-full flex items-center justify-between px-4 py-3 text-left transition-all cursor-pointer ${
+                                isOpen ? "bg-[#111111] text-white" : "bg-[#FAFAFA] text-[#111111] hover:bg-slate-100"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold uppercase tracking-wide">{cat.title}</span>
+                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                                  isOpen ? "bg-white/10 text-slate-300" : "bg-slate-100 text-slate-500"
+                                }`}>
+                                  {cat.services.length}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                {selectedInCat > 0 && (
+                                  <span className="text-[10px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/30 px-2 py-0.5 rounded-full">
+                                    {selectedInCat} added
+                                  </span>
+                                )}
+                                <svg
+                                  className={`w-4 h-4 transition-transform ${
+                                    isOpen ? "rotate-180 text-[#D4AF37]" : "text-slate-400"
+                                  }`}
+                                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </div>
+                            </button>
+
+                            {/* Services inside category */}
+                            {isOpen && (
+                              <div className="border-t border-slate-200 divide-y divide-slate-100 bg-white">
+                                {cat.services.map((service) => {
+                                  const finalPrice = service.discounted_price || service.price;
+                                  const isChecked = selectedServices.includes(service.id);
+                                  return (
+                                    <button
+                                      key={service.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedServices((prev) =>
+                                          prev.includes(service.id)
+                                            ? prev.filter((id) => id !== service.id)
+                                            : [...prev, service.id]
+                                        );
+                                        setApiError("");
+                                      }}
+                                      className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors cursor-pointer ${
+                                        isChecked
+                                          ? "bg-[#D4AF37]/10"
+                                          : "hover:bg-slate-50"
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                          isChecked ? "bg-[#D4AF37] border-[#D4AF37]" : "border-slate-300"
+                                        }`}>
+                                          {isChecked && (
+                                            <svg className="w-2.5 h-2.5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                          )}
+                                        </span>
+                                        <span className="text-xs font-semibold text-[#111111] leading-tight">{service.title}</span>
+                                      </div>
+                                      <div className="text-right shrink-0 ml-2">
+                                        <span className={`text-xs font-bold font-mono ${
+                                          isChecked ? "text-[#996515]" : "text-slate-500"
+                                        }`}>
+                                          Rs. {finalPrice.toLocaleString()}
+                                        </span>
+                                        {!!service.discount && service.discount > 0 && (
+                                          <span className="block text-[9px] text-emerald-500 font-bold">{service.discount}% OFF</span>
+                                        )}
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+
+                {selectedServices.length > 0 && (
+                  <div className="mt-2 flex items-center justify-between px-3 py-2 rounded-xl bg-[#111111] text-white text-xs">
+                    <span className="font-semibold text-slate-300">Combined Total:</span>
+                    <span className="font-extrabold text-[#D4AF37] font-mono">{getSelectedServicesTotal()}</span>
+                  </div>
+                )}
               </div>
 
               {/* Date & Time */}
@@ -652,10 +870,10 @@ export default function BookingModal({
 
               {/* Summary Card */}
               <div className="p-4 rounded-2xl bg-[#FAFAFA] border border-slate-200 space-y-1.5 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Service:</span>
-                  <span className="font-bold text-[#111111]">
-                    {getSelectedServiceTitle()}
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500 shrink-0">Services:</span>
+                  <span className="font-bold text-[#111111] text-right">
+                    {getSelectedServiceTitles()}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -667,7 +885,7 @@ export default function BookingModal({
                 <div className="flex justify-between border-t border-slate-200 pt-1.5">
                   <span className="text-slate-500">Estimated Total:</span>
                   <span className="font-extrabold text-[#996515] font-mono">
-                    {getSelectedServicePrice()}
+                    {getSelectedServicesTotal()}
                   </span>
                 </div>
               </div>
@@ -764,10 +982,10 @@ export default function BookingModal({
 
               {/* Summary Card */}
               <div className="p-3.5 rounded-2xl bg-[#FAFAFA] border border-slate-200 space-y-1 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Service:</span>
-                  <span className="font-bold text-[#111111]">
-                    {getSelectedServiceTitle()}
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500 shrink-0">Services:</span>
+                  <span className="font-bold text-[#111111] text-right">
+                    {getSelectedServiceTitles()}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -779,7 +997,7 @@ export default function BookingModal({
                 <div className="flex justify-between border-t border-slate-200 pt-1">
                   <span className="text-slate-500">Total:</span>
                   <span className="font-extrabold text-[#996515] font-mono">
-                    {getSelectedServicePrice()}
+                    {getSelectedServicesTotal()}
                   </span>
                 </div>
               </div>
@@ -931,9 +1149,9 @@ export default function BookingModal({
                   <span className="text-slate-500 font-bold uppercase">Booking Ref:</span>
                   <span className="font-bold text-[#996515] font-mono">{bookingRef}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Service:</span>
-                  <span className="font-bold">{getSelectedServiceTitle()}</span>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500 shrink-0">Services:</span>
+                  <span className="font-bold text-right">{getSelectedServiceTitles()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Requested Slot:</span>
@@ -968,7 +1186,7 @@ export default function BookingModal({
               <div className="space-y-2 max-w-sm mx-auto">
                 <a
                   href={`https://wa.me/923194415757?text=${encodeURIComponent(
-                    `Hello Jugnu's Saloon! I just submitted an appointment request (Ref: ${bookingRef}) for *${getSelectedServiceTitle()}* on *${selectedDate}* at *${selectedTime}*. My Name: *${clientName}*. Please confirm my booking!`
+                    `Hello Jugnu's Saloon! I just submitted an appointment request (Ref: ${bookingRef}) for *${getSelectedServiceTitles()}* on *${selectedDate}* at *${selectedTime}*. My Name: *${clientName}*. Please confirm my booking!`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
