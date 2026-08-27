@@ -77,8 +77,12 @@ export default function ProductsShowcase({ onOpenBooking }: ProductsShowcaseProp
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {products.slice(0, 4).map((product) => {
-              const hasDiscount =
-                product.discount && product.discount > 0 && product.discounted_price;
+              const hasDiscount = Boolean(
+                product.discount &&
+                product.discount > 0 &&
+                product.discounted_price &&
+                product.discounted_price < product.price
+              );
               const displayPrice = hasDiscount
                 ? product.discounted_price
                 : product.price;
@@ -126,11 +130,11 @@ export default function ProductsShowcase({ onOpenBooking }: ProductsShowcaseProp
                   <div className="pt-4 border-t border-slate-100 mt-4 space-y-4">
                     {/* Pricing */}
                     <div className="flex items-baseline space-x-3">
-                      <span className="font-mono text-xl font-bold text-[#111111]">
+                      <span className="font-sans text-xl font-extrabold text-[#111111]">
                         Rs. {displayPrice?.toLocaleString()}
                       </span>
                       {hasDiscount && (
-                        <span className="font-mono text-xs text-slate-400 line-through">
+                        <span className="font-sans text-xs text-slate-400 line-through">
                           Rs. {product.price.toLocaleString()}
                         </span>
                       )}

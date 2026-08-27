@@ -281,8 +281,8 @@ ${formData.message.trim()}`;
                     </div>
                     <div>
                       <p className="font-bold text-[#111111] uppercase">Email Inquiries</p>
-                      <a href="mailto:info@jugnusaloon.com" className="text-slate-700 hover:text-[#996515] font-semibold">
-                        info@jugnusaloon.com
+                      <a href="mailto:jugnussaloon5757@gmail.com" className="text-slate-700 hover:text-[#996515] font-semibold break-all">
+                        jugnussaloon5757@gmail.com
                       </a>
                     </div>
                   </div>
