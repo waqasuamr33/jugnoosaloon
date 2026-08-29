@@ -28,7 +28,7 @@ const slides = [
     mobileImage: "/images/hero-m.jpeg",
     alt: "Royal HD Airbrush Bridal Makeup",
     objectPosition: "center top",
-    mobileObjectPosition: "center 75px",
+    mobileObjectPosition: "center top",
   },
   {
     id: 3,
