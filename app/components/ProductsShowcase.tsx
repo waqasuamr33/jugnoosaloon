@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getProducts, ProductItem } from "../lib/api";
+import { useCart } from "../context/CartContext";
 
 interface ProductsShowcaseProps {
   onOpenBooking?: (productName?: string) => void;
@@ -12,6 +13,7 @@ interface ProductsShowcaseProps {
 export default function ProductsShowcase({ onOpenBooking }: ProductsShowcaseProps) {
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const { cart, addToCart } = useCart();
 
   useEffect(() => {
     async function fetchProductsData() {
@@ -91,6 +93,9 @@ export default function ProductsShowcase({ onOpenBooking }: ProductsShowcaseProp
                   ? product.image_url
                   : "/images/hair_products.png";
 
+              const cartItem = cart.find((i) => i.product.id === product.id);
+              const inCartQty = cartItem ? cartItem.quantity : 0;
+
               return (
                 <div
                   key={product.id}
@@ -140,22 +145,37 @@ export default function ProductsShowcase({ onOpenBooking }: ProductsShowcaseProp
                       )}
                     </div>
 
-                    {/* Action Button: WhatsApp Order Link */}
-                    <a
-                      href={`https://wa.me/923194415757?text=${encodeURIComponent(
-                        `Hello Jugnu's Saloon, I would like to order this product: *${product.title}* (Price: Rs. ${displayPrice?.toLocaleString()}). Link: ${
-                          typeof window !== "undefined" ? window.location.origin + "/products" : "https://software.jugnussaloon.com/products"
-                        }`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-3.5 rounded-xl bg-[#111111] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#25D366] hover:text-white transition-all cursor-pointer shadow-md flex items-center justify-center space-x-2 group/wa"
-                    >
-                      <svg className="w-4 h-4 fill-current text-[#D4AF37] group-hover/wa:text-white transition-colors" viewBox="0 0 24 24">
-                        <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.763.459 3.483 1.332 5.001L2 22l5.127-1.341a9.946 9.946 0 004.882 1.28h.003c5.505 0 9.988-4.478 9.989-9.984 0-2.668-1.037-5.176-2.922-7.062A9.92 9.92 0 0012.012 2zm5.74 14.184c-.244.688-1.42 1.314-1.96 1.396-.505.076-1.162.107-1.874-.12-.435-.138-1.002-.324-1.74-.645-3.096-1.348-5.115-4.492-5.27-4.698-.153-.205-1.258-1.674-1.258-3.192 0-1.517.794-2.264 1.077-2.553.282-.288.614-.36.819-.36.205 0 .41.002.589.011.19.01.442-.072.693.53.256.615.872 2.128.948 2.282.077.153.128.333.026.538-.103.205-.154.333-.308.512-.154.18-.323.402-.461.54-.154.153-.314.321-.135.628.18.307.798 1.316 1.713 2.13 1.177 1.047 2.167 1.371 2.474 1.525.307.153.487.128.667-.077.179-.205.768-.897.973-1.205.205-.307.41-.256.692-.153.282.102 1.794.846 2.102 1.001.307.153.512.23.589.36.077.128.077.742-.167 1.43z"/>
-                      </svg>
-                      <span>Book on WhatsApp</span>
-                    </a>
+                    {/* Action Buttons: Add to Cart & Direct WhatsApp */}
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => addToCart(product, 1)}
+                        className="w-full py-3 rounded-xl bg-[#111111] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer shadow-md flex items-center justify-center space-x-2 group/cart"
+                      >
+                        <svg className="w-4 h-4 text-[#D4AF37] group-hover/cart:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <span>
+                          {inCartQty > 0 ? `In Cart (${inCartQty}) • Add More` : "Add to Cart"}
+                        </span>
+                      </button>
+
+                      <a
+                        href={`https://wa.me/923194415757?text=${encodeURIComponent(
+                          `Hello Jugnu's Saloon, I would like to inquire about this product: *${product.title}* (Price: Rs. ${displayPrice?.toLocaleString()}). Link: ${
+                            typeof window !== "undefined" ? window.location.origin + "/products" : "https://software.jugnussaloon.com/products"
+                          }`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-[11px] uppercase tracking-wider hover:border-[#25D366] hover:text-[#25D366] hover:bg-[#25D366]/5 transition-all cursor-pointer flex items-center justify-center space-x-1.5 group/wa"
+                      >
+                        <svg className="w-3.5 h-3.5 fill-current text-[#25D366]" viewBox="0 0 24 24">
+                          <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.763.459 3.483 1.332 5.001L2 22l5.127-1.341a9.946 9.946 0 004.882 1.28h.003c5.505 0 9.988-4.478 9.989-9.984 0-2.668-1.037-5.176-2.922-7.062A9.92 9.92 0 0012.012 2zm5.74 14.184c-.244.688-1.42 1.314-1.96 1.396-.505.076-1.162.107-1.874-.12-.435-.138-1.002-.324-1.74-.645-3.096-1.348-5.115-4.492-5.27-4.698-.153-.205-1.258-1.674-1.258-3.192 0-1.517.794-2.264 1.077-2.553.282-.288.614-.36.819-.36.205 0 .41.002.589.011.19.01.442-.072.693.53.256.615.872 2.128.948 2.282.077.153.128.333.026.538-.103.205-.154.333-.308.512-.154.18-.323.402-.461.54-.154.153-.314.321-.135.628.18.307.798 1.316 1.713 2.13 1.177 1.047 2.167 1.371 2.474 1.525.307.153.487.128.667-.077.179-.205.768-.897.973-1.205.205-.307.41-.256.692-.153.282.102 1.794.846 2.102 1.001.307.153.512.23.589.36.077.128.077.742-.167 1.43z"/>
+                        </svg>
+                        <span>Direct WhatsApp</span>
+                      </a>
+                    </div>
                   </div>
                 </div>
               );

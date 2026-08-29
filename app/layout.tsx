@@ -26,7 +26,9 @@ export const metadata: Metadata = {
 
 
 import { AuthProvider } from "./context/AuthContext";
+import { CartProvider } from "./context/CartContext";
 import AuthModal from "./components/AuthModal";
+import CartDrawer from "./components/CartDrawer";
 import WhatsAppFloatingButton from "./components/WhatsAppFloatingButton";
 
 export default function RootLayout({
@@ -49,9 +51,12 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <AuthProvider>
-          {children}
-          <AuthModal />
-          <WhatsAppFloatingButton />
+          <CartProvider>
+            {children}
+            <AuthModal />
+            <CartDrawer />
+            <WhatsAppFloatingButton />
+          </CartProvider>
         </AuthProvider>
       </body>
     </html>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 
 interface NavbarProps {
   onOpenBooking?: (serviceName?: string) => void;
@@ -17,6 +18,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const pathname = usePathname();
   const { customer, isAuthenticated, logout, openAuthModal } = useAuth();
+  const { totalItemsCount, openCart } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -87,6 +89,24 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
 
         {/* Action CTAs */}
         <div className="hidden sm:flex items-center space-x-3">
+          {/* Cart Icon Trigger */}
+          <button
+            type="button"
+            onClick={openCart}
+            className="relative p-2.5 rounded-full text-slate-800 hover:text-[#D4AF37] hover:bg-[#FAFAFA] border border-slate-200 transition-all group cursor-pointer"
+            title="View Shopping Cart"
+            aria-label="View Shopping Cart"
+          >
+            <svg className="w-4 h-4 text-[#111111] group-hover:text-[#D4AF37] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            {totalItemsCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#111111] text-[#D4AF37] border border-[#D4AF37] text-[10px] font-extrabold flex items-center justify-center animate-bounce">
+                {totalItemsCount}
+              </span>
+            )}
+          </button>
+
           {/* Phone Call Link */}
           <a
             href="tel:+923194415757"
@@ -179,6 +199,23 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
 
         {/* Mobile Menu Toggle */}
         <div className="flex md:hidden items-center space-x-2">
+          {/* Mobile Cart Icon */}
+          <button
+            type="button"
+            onClick={openCart}
+            className="relative p-2 rounded-full text-slate-800 hover:text-[#D4AF37] border border-slate-200"
+            aria-label="View Shopping Cart"
+          >
+            <svg className="w-4 h-4 text-[#111111]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            {totalItemsCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 rounded-full bg-[#111111] text-[#D4AF37] border border-[#D4AF37] text-[9px] font-bold flex items-center justify-center">
+                {totalItemsCount}
+              </span>
+            )}
+          </button>
+
           {!isAuthenticated && (
             <button
               onClick={() => openAuthModal("Sign in to book")}
