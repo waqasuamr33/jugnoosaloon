@@ -67,14 +67,23 @@ export default function OurWorkPage() {
       <Navbar onOpenBooking={handleOpenBooking} />
 
       {/* Hero Header Banner */}
-      <section className="relative pt-36 pb-20 bg-[#111111] text-white overflow-hidden">
+      <section className="relative pt-36 pb-24 bg-[#0A0A0B] text-white overflow-hidden border-b border-[#D4AF37]/20">
+        {/* Golden Flare & Ambient Glow Effects */}
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/3 w-[600px] sm:w-[900px] h-[350px] sm:h-[450px] bg-gradient-to-b from-[#D4AF37]/25 via-[#D4AF37]/8 to-transparent rounded-full blur-3xl" />
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-[#D4AF37]/10 rounded-full blur-[120px]" />
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-[#D4AF37]/10 rounded-full blur-[120px]" />
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent" />
+          <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/20 to-transparent" />
+        </div>
+
         <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-4">
-          <h1 className="font-sans text-4xl sm:text-6xl font-extrabold uppercase tracking-tight">
-            OUR WORK & PORTFOLIO
+          <h1 className="font-sans text-4xl sm:text-6xl font-extrabold uppercase tracking-tight text-white">
+            OUR WORK &amp; PORTFOLIO
           </h1>
-          <div className="w-20 h-1 bg-[#D4AF37] mx-auto rounded-full" />
+          <div className="w-16 h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent mx-auto rounded-full" />
           <p className="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto font-normal leading-relaxed">
-            A Pinterest-style visual anthology showing our transformations in their authentic natural resolution.
+            A visual anthology showing our transformations in their authentic natural resolution.
           </p>
         </div>
       </section>
