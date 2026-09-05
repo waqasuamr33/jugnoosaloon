@@ -195,8 +195,8 @@ export default function Footer({ onOpenBooking }: FooterProps) {
                 <a href="tel:+923194415757" className="hover:text-[#D4AF37] font-semibold text-white">
                   +92 319 4415757
                 </a>
-                <a href="tel:+920546558633" className="hover:text-[#D4AF37] font-semibold text-white">
-                  +92 054 6558633
+                <a href="tel:0546558633" className="hover:text-[#D4AF37] font-semibold text-white">
+                  054 6558633
                 </a>
               </p>
 

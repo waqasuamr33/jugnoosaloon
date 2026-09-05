@@ -272,8 +272,8 @@ ${formData.message.trim()}`;
                       <a href="tel:+923194415757" className="text-slate-700 hover:text-[#996515] font-semibold text-sm block">
                         +92 319 4415757
                       </a>
-                      <a href="tel:+920546558633" className="text-slate-700 hover:text-[#996515] font-semibold text-sm block">
-                        +92 054 6558633
+                      <a href="tel:0546558633" className="text-slate-700 hover:text-[#996515] font-semibold text-sm block">
+                        054 6558633
                       </a>
                     </div>
                   </div>
