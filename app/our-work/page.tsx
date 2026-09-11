@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 import BookingModal from "../components/BookingModal";
 import PageHero from "../components/PageHero";
 import { getGalleries, GalleryItem, normalizeImageUrl } from "../lib/api";
+import ProtectedImage, { downloadDecoyLogo } from "../components/ProtectedImage";
 
 export default function OurWorkPage() {
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -40,6 +41,18 @@ export default function OurWorkPage() {
     }
 
     loadData();
+  }, []);
+
+  // Keyboard shortcut listener: Ctrl+S / Cmd+S downloads the official logo instead of saving web assets
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        downloadDecoyLogo("Jugnus_Saloon_Official_Logo.png");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // Compute unique categories dynamically
@@ -129,15 +142,14 @@ export default function OurWorkPage() {
                 return (
                   <div
                     key={item.id || idx}
-                    onClick={() => setLightboxImage(imageSrc)}
                     className="break-inside-avoid mb-6 group relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm hover:shadow-2xl border border-slate-200/80 hover:border-[#D4AF37] transition-all duration-300 cursor-pointer"
                   >
-                    {/* True Natural Aspect Ratio Image (No distortion, no forced height) */}
-                    <img
+                    {/* Protected Image: Displays clean, downloads Jugnu's Saloon logo */}
+                    <ProtectedImage
                       src={imageSrc}
                       alt={item.title || "Jugnu's Saloon Transformation"}
-                      loading="lazy"
-                      className="w-full h-auto block object-contain sm:object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                      onClick={() => setLightboxImage(imageSrc)}
+                      imgClassName="w-full h-auto block object-contain sm:object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                     />
                   </div>
                 );
@@ -153,28 +165,48 @@ export default function OurWorkPage() {
           className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-8 bg-black/90 backdrop-blur-md animate-fadeIn cursor-zoom-out"
           onClick={() => setLightboxImage(null)}
         >
-          {/* Close Button */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setLightboxImage(null);
-            }}
-            className="absolute top-6 right-6 z-30 w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer shadow-lg text-lg font-bold"
-            aria-label="Close image"
-          >
-            ✕
-          </button>
+          {/* Top Actions */}
+          <div className="absolute top-6 right-6 z-30 flex items-center gap-3">
+            {/* Decoy Download Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadDecoyLogo("Jugnus_Saloon_Official_Logo.png");
+              }}
+              className="w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer shadow-lg text-sm font-bold"
+              title="Save Image"
+              aria-label="Save image"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </button>
 
-          {/* Full-Image Container */}
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxImage(null);
+              }}
+              className="w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer shadow-lg text-lg font-bold"
+              aria-label="Close image"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Full-Image Container with Protected Decoy Overlay */}
           <div
             className="relative max-w-6xl max-h-[90vh] flex items-center justify-center cursor-default"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
+            <ProtectedImage
               src={lightboxImage}
               alt="Full Size View"
-              className="max-h-[90vh] max-w-full w-auto h-auto object-contain rounded-2xl shadow-2xl"
+              className="max-h-[90vh] max-w-full rounded-2xl shadow-2xl"
+              imgClassName="max-h-[90vh] max-w-full w-auto h-auto object-contain rounded-2xl shadow-2xl"
             />
           </div>
         </div>
