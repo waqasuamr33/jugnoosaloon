@@ -6,31 +6,39 @@ import Footer from "../components/Footer";
 import BookingModal from "../components/BookingModal";
 import PageHero from "../components/PageHero";
 import Image from "next/image";
-import { getProducts, ProductItem } from "../lib/api";
+import { getProducts, getProductCategories, ProductItem, ProductCategoryItem } from "../lib/api";
 import { useCart } from "../context/CartContext";
 
 export default function ProductsPage() {
   const [bookingOpen, setBookingOpen] = useState<boolean>(false);
   const [selectedProduct, setSelectedProduct] = useState<string>("");
   const [products, setProducts] = useState<ProductItem[]>([]);
+  const [categories, setCategories] = useState<ProductCategoryItem[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
-  const { cart, addToCart, openCart } = useCart();
+  const { cart, addToCart } = useCart();
 
   useEffect(() => {
-    async function loadProductsData() {
+    async function loadStoreData() {
       try {
-        const data = await getProducts();
-        if (data && data.length > 0) {
-          setProducts(data);
+        const [productsData, categoriesData] = await Promise.all([
+          getProducts(),
+          getProductCategories(),
+        ]);
+        if (productsData && productsData.length > 0) {
+          setProducts(productsData);
+        }
+        if (categoriesData && categoriesData.length > 0) {
+          setCategories(categoriesData);
         }
       } catch (err) {
-        console.error("Failed to load store products:", err);
+        console.error("Failed to load store products or categories:", err);
       } finally {
         setLoading(false);
       }
     }
-    loadProductsData();
+    loadStoreData();
   }, []);
 
   const handleOpenBooking = (productTitle: string = "") => {
@@ -38,9 +46,63 @@ export default function ProductsPage() {
     setBookingOpen(true);
   };
 
-  const filteredProducts = products.filter((p) =>
-    p.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Compute category counts
+  const totalCount = products.length;
+  const uncategorizedCount = products.filter(
+    (p) => !p.product_category_id && !p.category
+  ).length;
+
+  // Dynamically assemble category tabs
+  const categoryTabs: { id: string; title: string; count: number }[] = [
+    { id: "all", title: "All Products", count: totalCount },
+  ];
+
+  categories.forEach((cat) => {
+    const count = products.filter(
+      (p) =>
+        p.product_category_id === cat.id ||
+        p.category?.id === cat.id ||
+        p.category?.title?.toLowerCase() === cat.title.toLowerCase()
+    ).length;
+    categoryTabs.push({
+      id: String(cat.id),
+      title: cat.title,
+      count,
+    });
+  });
+
+  if (uncategorizedCount > 0) {
+    categoryTabs.push({
+      id: "uncategorized",
+      title: "Salon Care Essentials",
+      count: uncategorizedCount,
+    });
+  }
+
+  // Filter products by selected category and search term
+  const filteredProducts = products.filter((p) => {
+    let matchesCategory = true;
+    if (selectedCategory === "all") {
+      matchesCategory = true;
+    } else if (selectedCategory === "uncategorized") {
+      matchesCategory = !p.product_category_id && !p.category;
+    } else {
+      matchesCategory =
+        String(p.product_category_id) === selectedCategory ||
+        String(p.category?.id) === selectedCategory ||
+        p.category?.title?.toLowerCase() === selectedCategory.toLowerCase();
+    }
+
+    const matchesSearch =
+      !searchQuery.trim() ||
+      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      Boolean(
+        p.category?.title &&
+          p.category.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <main className="min-h-screen bg-[#FAFAFA] text-[#111111] relative">
@@ -55,23 +117,75 @@ export default function ProductsPage() {
       {/* Main Content & Products Grid */}
       <section className="py-20 bg-[#FFFFFF]">
         <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Search & Filter Toolbar */}
-          <div className="mb-12 flex flex-col sm:flex-row items-center justify-between gap-4 p-6 rounded-3xl bg-[#F8F8F6] border border-slate-200 shadow-sm">
+          {/* Search & Counter Toolbar */}
+          <div className="mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 p-6 rounded-3xl bg-[#F8F8F6] border border-slate-200 shadow-sm">
             <div className="w-full sm:w-96">
               <label className="block text-xs uppercase font-bold text-slate-700 mb-1">
                 Search Products
               </label>
               <input
                 type="text"
-                placeholder="Search by product name e.g. Pomade, Shampoo..."
+                placeholder="Search by name e.g. Shampoo, Serum, Pomade..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full p-3 rounded-xl bg-white border border-slate-300 text-xs text-[#111111] focus:border-[#D4AF37] focus:outline-none font-medium"
+                className="w-full p-3 rounded-xl bg-white border border-slate-300 text-xs text-[#111111] focus:border-[#D4AF37] focus:outline-none font-medium transition-colors"
               />
             </div>
 
             <div className="text-xs text-slate-500 font-semibold">
-              Showing <strong className="text-[#111111]">{filteredProducts.length}</strong> products
+              Showing <strong className="text-[#111111]">{filteredProducts.length}</strong> of {totalCount} products
+            </div>
+          </div>
+
+          {/* Luxury Category Filter Tabs */}
+          <div className="mb-12">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs uppercase font-extrabold tracking-wider text-[#111111] flex items-center gap-2">
+                <span className="text-[#996515]">✦</span> Filter by Category
+              </span>
+              {(selectedCategory !== "all" || searchQuery) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory("all");
+                    setSearchQuery("");
+                  }}
+                  className="text-xs font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer underline underline-offset-4"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2.5 overflow-x-auto pb-3 pt-1 scrollbar-none">
+              {categoryTabs.map((cat) => {
+                const active = selectedCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className="flex-shrink-0 cursor-pointer transition-all duration-300 flex items-center space-x-2.5 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm group"
+                    style={{
+                      border: active ? "2px solid #D4AF37" : "1.5px solid rgba(0,0,0,0.12)",
+                      backgroundColor: active ? "#111111" : "#FFFFFF",
+                      color: active ? "#D4AF37" : "#111111",
+                      boxShadow: active ? "0 6px 18px rgba(212,175,55,0.25)" : "0 1px 4px rgba(0,0,0,0.03)",
+                    }}
+                  >
+                    <span>{cat.title}</span>
+                    <span
+                      className="text-[10px] px-2 py-0.5 rounded-full font-extrabold transition-colors"
+                      style={{
+                        backgroundColor: active ? "rgba(212,175,55,0.2)" : "#F1F1EF",
+                        color: active ? "#D4AF37" : "#666666",
+                      }}
+                    >
+                      {cat.count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -91,8 +205,25 @@ export default function ProductsPage() {
               ))}
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="py-20 text-center text-slate-500 font-medium">
-              No products found matching &quot;{searchQuery}&quot;.
+            <div className="py-20 text-center space-y-4">
+              <div className="w-16 h-16 mx-auto rounded-full bg-[#F8F8F6] border border-slate-200 flex items-center justify-center text-2xl text-[#996515]">
+                ◇
+              </div>
+              <p className="text-slate-600 font-medium">
+                No products found {selectedCategory !== "all" ? "in this category" : ""} {searchQuery ? `matching "${searchQuery}"` : ""}.
+              </p>
+              {(selectedCategory !== "all" || searchQuery) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory("all");
+                    setSearchQuery("");
+                  }}
+                  className="px-6 py-2.5 rounded-full bg-[#111111] text-white hover:bg-[#D4AF37] hover:text-black font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md"
+                >
+                  Reset Filters
+                </button>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -141,6 +272,13 @@ export default function ProductsPage() {
                         )}
                       </div>
 
+                      {/* Product Category Tag */}
+                      <div className="mb-2">
+                        <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#996515] bg-[#D4AF37]/10 px-2.5 py-0.5 rounded-full border border-[#D4AF37]/25 inline-block">
+                          {product.category?.title || "Salon Care"}
+                        </span>
+                      </div>
+
                       {/* Product Title */}
                       <h3 className="font-sans font-bold text-lg text-[#111111] line-clamp-2 mb-2 group-hover:text-[#996515] transition-colors">
                         {product.title}
@@ -184,7 +322,9 @@ export default function ProductsPage() {
 
                         <a
                           href={`https://wa.me/923194415757?text=${encodeURIComponent(
-                            `Hello Jugnu's Saloon, I would like to inquire about this product: *${product.title}* (Price: Rs. ${displayPrice?.toLocaleString()}). Link: ${
+                            `Hello Jugnu's Saloon, I would like to inquire about this product: *${product.title}* (Category: ${
+                              product.category?.title || "Salon Care"
+                            }, Price: Rs. ${displayPrice?.toLocaleString()}). Link: ${
                               typeof window !== "undefined" ? window.location.href : "https://software.jugnussaloon.com/products"
                             }`
                           )}`}

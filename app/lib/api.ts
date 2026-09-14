@@ -1,5 +1,14 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://software.jugnussaloon.com/api';
 
+export interface ProductCategoryItem {
+  id: number;
+  title: string;
+  description?: string | null;
+  products_count?: number;
+  image_url?: string | null;
+  created_at?: string;
+}
+
 export interface ProductItem {
   id: number;
   title: string;
@@ -8,6 +17,11 @@ export interface ProductItem {
   discounted_price?: number;
   stock?: number;
   image_url?: string | null;
+  product_category_id?: number | null;
+  category?: {
+    id: number;
+    title: string;
+  } | null;
   created_at?: string;
 }
 
@@ -161,12 +175,47 @@ export interface GalleryItem {
 }
 
 /**
+ * Fetch Product Categories from Backend API
+ */
+export async function getProductCategories(): Promise<ProductCategoryItem[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/product-categories`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      console.warn(`[API] getProductCategories returned status ${res.status}`);
+      return [];
+    }
+
+    const json = await res.json();
+    return json.success && Array.isArray(json.data) ? json.data : [];
+  } catch (error) {
+    console.warn('[API] Unable to fetch product categories from backend:', error);
+    return [];
+  }
+}
+
+/**
  * Fetch Product Catalog from Backend API
  */
-export async function getProducts(search?: string): Promise<ProductItem[]> {
+export async function getProducts(
+  categoryIdOrSearch?: number | string | null,
+  search?: string
+): Promise<ProductItem[]> {
   try {
     const url = new URL(`${API_BASE_URL}/products`);
-    if (search) url.searchParams.append('search', search);
+    if (typeof categoryIdOrSearch === 'number') {
+      url.searchParams.append('category_id', String(categoryIdOrSearch));
+      if (search) url.searchParams.append('search', search);
+    } else if (typeof categoryIdOrSearch === 'string' && !search) {
+      url.searchParams.append('search', categoryIdOrSearch);
+    } else if (search) {
+      url.searchParams.append('search', search);
+    }
 
     const res = await fetch(url.toString(), {
       method: 'GET',

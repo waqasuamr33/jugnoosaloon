@@ -3,27 +3,35 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getProducts, ProductItem } from "../lib/api";
+import { getProducts, getProductCategories, ProductItem, ProductCategoryItem } from "../lib/api";
 import { useCart } from "../context/CartContext";
 
 interface ProductsShowcaseProps {
   onOpenBooking?: (productName?: string) => void;
 }
 
-export default function ProductsShowcase({ onOpenBooking }: ProductsShowcaseProps) {
+export default function ProductsShowcase({ onOpenBooking: _onOpenBooking }: ProductsShowcaseProps) {
   const [products, setProducts] = useState<ProductItem[]>([]);
+  const [categories, setCategories] = useState<ProductCategoryItem[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [loading, setLoading] = useState<boolean>(true);
   const { cart, addToCart } = useCart();
 
   useEffect(() => {
     async function fetchProductsData() {
       try {
-        const data = await getProducts();
-        if (data && data.length > 0) {
-          setProducts(data);
+        const [productsData, categoriesData] = await Promise.all([
+          getProducts(),
+          getProductCategories(),
+        ]);
+        if (productsData && productsData.length > 0) {
+          setProducts(productsData);
+        }
+        if (categoriesData && categoriesData.length > 0) {
+          setCategories(categoriesData);
         }
       } catch (err) {
-        console.error("Failed to load showcase products:", err);
+        console.error("Failed to load showcase products or categories:", err);
       } finally {
         setLoading(false);
       }
@@ -31,11 +39,22 @@ export default function ProductsShowcase({ onOpenBooking }: ProductsShowcaseProp
     fetchProductsData();
   }, []);
 
+  // Filter products for showcase
+  const filteredProducts = products.filter((p) => {
+    if (selectedCategory === "all") return true;
+    if (selectedCategory === "uncategorized") return !p.product_category_id && !p.category;
+    return (
+      String(p.product_category_id) === selectedCategory ||
+      String(p.category?.id) === selectedCategory ||
+      p.category?.title?.toLowerCase() === selectedCategory.toLowerCase()
+    );
+  });
+
   return (
     <section className="py-24 bg-[#FAFAFA] text-[#111111] relative overflow-hidden border-t border-slate-200">
       <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div className="space-y-3 max-w-2xl">
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#996515]">
               SALON CARE COLLECTION
@@ -60,6 +79,49 @@ export default function ProductsShowcase({ onOpenBooking }: ProductsShowcaseProp
           </div>
         </div>
 
+        {/* Category Pills in Showcase */}
+        {categories.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-none">
+            <button
+              type="button"
+              onClick={() => setSelectedCategory("all")}
+              className="flex-shrink-0 cursor-pointer transition-all duration-300 px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm"
+              style={{
+                border: selectedCategory === "all" ? "2px solid #D4AF37" : "1.5px solid rgba(0,0,0,0.12)",
+                backgroundColor: selectedCategory === "all" ? "#111111" : "#FFFFFF",
+                color: selectedCategory === "all" ? "#D4AF37" : "#111111",
+              }}
+            >
+              All Products ({products.length})
+            </button>
+            {categories.map((cat) => {
+              const count = products.filter(
+                (p) =>
+                  p.product_category_id === cat.id ||
+                  p.category?.id === cat.id ||
+                  p.category?.title?.toLowerCase() === cat.title.toLowerCase()
+              ).length;
+              const active = selectedCategory === String(cat.id);
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedCategory(String(cat.id))}
+                  className="flex-shrink-0 cursor-pointer transition-all duration-300 px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm flex items-center space-x-2"
+                  style={{
+                    border: active ? "2px solid #D4AF37" : "1.5px solid rgba(0,0,0,0.12)",
+                    backgroundColor: active ? "#111111" : "#FFFFFF",
+                    color: active ? "#D4AF37" : "#111111",
+                  }}
+                >
+                  <span>{cat.title}</span>
+                  <span className="text-[10px] opacity-75 font-semibold">({count})</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Skeleton Loading or Products Grid */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 animate-pulse">
@@ -72,13 +134,13 @@ export default function ProductsShowcase({ onOpenBooking }: ProductsShowcaseProp
               </div>
             ))}
           </div>
-        ) : products.length === 0 ? (
+        ) : filteredProducts.length === 0 ? (
           <div className="py-12 text-center text-slate-500 font-medium">
-            No products available currently in store.
+            No products available in this category.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {products.slice(0, 4).map((product) => {
+            {filteredProducts.slice(0, 4).map((product) => {
               const hasDiscount = Boolean(
                 product.discount &&
                 product.discount > 0 &&
@@ -126,10 +188,17 @@ export default function ProductsShowcase({ onOpenBooking }: ProductsShowcaseProp
                       )}
                     </div>
 
-                    {/* Product Title */}
-                    <h3 className="font-sans font-bold text-base text-[#111111] line-clamp-2 mb-2 group-hover:text-[#996515] transition-colors">
-                      {product.title}
-                    </h3>
+                      {/* Product Category Tag */}
+                      <div className="mb-1.5">
+                        <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#996515] bg-[#D4AF37]/10 px-2.5 py-0.5 rounded-full border border-[#D4AF37]/25 inline-block">
+                          {product.category?.title || "Salon Care"}
+                        </span>
+                      </div>
+
+                      {/* Product Title */}
+                      <h3 className="font-sans font-bold text-base text-[#111111] line-clamp-2 mb-2 group-hover:text-[#996515] transition-colors">
+                        {product.title}
+                      </h3>
                   </div>
 
                   <div className="pt-4 border-t border-slate-100 mt-4 space-y-4">

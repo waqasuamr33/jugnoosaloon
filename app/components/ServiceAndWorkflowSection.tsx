@@ -14,6 +14,7 @@ interface ServiceItem {
   price: string;
   originalPrice?: string;
   discount?: number;
+  description?: string;
 }
 
 interface CategoryData {
@@ -57,6 +58,7 @@ export default function ServiceAndWorkflowSection({
 }: ServiceAndWorkflowSectionProps) {
   const [categoriesList, setCategoriesList] = useState<CategoryData[]>([]);
   const [activeId, setActiveId] = useState<string>("");
+  const [expandedServiceId, setExpandedServiceId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
@@ -96,6 +98,7 @@ export default function ServiceAndWorkflowSection({
                       price: `Rs. ${finalPrice.toLocaleString()}`,
                       originalPrice: hasDiscount ? `Rs. ${s.price.toLocaleString()}` : undefined,
                       discount: s.discount || 0,
+                      description: s.description || "",
                     };
                   })
               : [];
@@ -249,7 +252,10 @@ export default function ServiceAndWorkflowSection({
                 return (
                   <button
                     key={cat.id}
-                    onClick={() => setActiveId(cat.id)}
+                    onClick={() => {
+                      setActiveId(cat.id);
+                      setExpandedServiceId(null);
+                    }}
                     className="cursor-pointer transition-all duration-300"
                     style={{
                       padding: "11px 28px",
@@ -343,84 +349,142 @@ export default function ServiceAndWorkflowSection({
                       borderTop: "1px solid rgba(0,0,0,0.08)",
                     }}
                   >
-                    {current.services.map((item, idx) => (
-                      <div
-                        key={item.id}
-                        className="group flex items-center justify-between gap-4 transition-all duration-200 hover:bg-[#FAF8F2] px-3 -mx-3 rounded-xl"
-                        style={{
-                          paddingTop: "16px",
-                          paddingBottom: "16px",
-                          borderBottom:
-                            idx < current.services.length - 1
-                              ? "1px solid rgba(0,0,0,0.06)"
-                              : "none",
-                        }}
-                      >
-                        {/* name + duration + discount badge */}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center space-x-2">
-                            <p
-                              className="font-bold text-[#111111] text-sm leading-snug group-hover:text-[#996515] transition-colors"
-                            >
-                              {item.name}
-                            </p>
+                    {current.services.map((item, idx) => {
+                      const isExpanded = expandedServiceId === item.id;
+                      const hasDescription = Boolean(item.description && item.description.trim().length > 0);
+                      const isLongDescription = Boolean(
+                        hasDescription && (
+                          (item.description && item.description.trim().length > 60) ||
+                          (item.description && item.description.split(/\r?\n/).filter((l) => l.trim().length > 0).length > 2)
+                        )
+                      );
 
-                            {item.discount && item.discount > 0 ? (
-                              <span className="bg-[#111111] text-[#D4AF37] text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider border border-[#D4AF37]/40 shadow-sm">
-                                {item.discount}% OFF
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => {
+                            if (expandedServiceId && expandedServiceId !== item.id) {
+                              setExpandedServiceId(null);
+                            }
+                          }}
+                          className="group flex items-start justify-between gap-4 transition-all duration-200 hover:bg-[#FAF8F2] px-3 -mx-3 rounded-xl cursor-default"
+                          style={{
+                            paddingTop: "16px",
+                            paddingBottom: "16px",
+                            borderBottom:
+                              idx < current.services.length - 1
+                                ? "1px solid rgba(0,0,0,0.06)"
+                                : "none",
+                          }}
+                        >
+                          {/* name + discount badge + description */}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                              <p
+                                className="font-bold text-[#111111] text-sm leading-snug group-hover:text-[#996515] transition-colors"
+                              >
+                                {item.name}
+                              </p>
+
+                              {item.discount && item.discount > 0 ? (
+                                <span className="bg-[#111111] text-[#D4AF37] text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider border border-[#D4AF37]/40 shadow-sm">
+                                  {item.discount}% OFF
+                                </span>
+                              ) : null}
+                            </div>
+
+                            {/* 2-line Description with Read More / Show Less */}
+                            {hasDescription && (
+                              <div className="mt-1.5">
+                                <p
+                                  className={`text-xs text-slate-500 font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
+                                    isExpanded ? "" : "line-clamp-2"
+                                  }`}
+                                  style={
+                                    !isExpanded
+                                      ? {
+                                          display: "-webkit-box",
+                                          WebkitLineClamp: 2,
+                                          WebkitBoxOrient: "vertical",
+                                          overflow: "hidden",
+                                        }
+                                      : undefined
+                                  }
+                                >
+                                  {item.description}
+                                </p>
+
+                                {isLongDescription && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setExpandedServiceId(isExpanded ? null : item.id);
+                                    }}
+                                    className="mt-1 text-[11px] font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none"
+                                  >
+                                    <span>{isExpanded ? "Show Less" : "Read More"}</span>
+                                    <span className="text-[8px] leading-none transition-transform duration-200">
+                                      {isExpanded ? "▲" : "▼"}
+                                    </span>
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* price + book */}
+                          <div className="flex items-center gap-5 flex-shrink-0 pt-0.5">
+                            <div className="text-right">
+                              <span
+                                className="font-bold font-mono text-base block text-[#996515]"
+                              >
+                                {item.price}
                               </span>
-                            ) : null}
+                              {item.originalPrice ? (
+                                <span className="font-mono text-[11px] text-slate-400 line-through block">
+                                  {item.originalPrice}
+                                </span>
+                              ) : null}
+                            </div>
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenBooking(item.name);
+                              }}
+                              className="cursor-pointer transition-all duration-200"
+                              style={{
+                                padding: "8px 20px",
+                                fontSize: "10px",
+                                fontWeight: 700,
+                                letterSpacing: "0.15em",
+                                textTransform: "uppercase",
+                                border: "1.5px solid #111111",
+                                borderRadius: "6px",
+                                background: "#111111",
+                                color: "#FFFFFF",
+                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = "#D4AF37";
+                                e.currentTarget.style.borderColor = "#D4AF37";
+                                e.currentTarget.style.color = "#111111";
+                                e.currentTarget.style.boxShadow = "0 4px 12px rgba(212,175,55,0.4)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = "#111111";
+                                e.currentTarget.style.borderColor = "#111111";
+                                e.currentTarget.style.color = "#FFFFFF";
+                                e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+                              }}
+                            >
+                              Book
+                            </button>
                           </div>
                         </div>
-
-                        {/* price + book */}
-                        <div className="flex items-center gap-5 flex-shrink-0">
-                          <div className="text-right">
-                            <span
-                              className="font-bold font-mono text-base block text-[#996515]"
-                            >
-                              {item.price}
-                            </span>
-                            {item.originalPrice ? (
-                              <span className="font-mono text-[11px] text-slate-400 line-through block">
-                                {item.originalPrice}
-                              </span>
-                            ) : null}
-                          </div>
-
-                          <button
-                            onClick={() => onOpenBooking(item.name)}
-                            className="cursor-pointer transition-all duration-200"
-                            style={{
-                              padding: "8px 20px",
-                              fontSize: "10px",
-                              fontWeight: 700,
-                              letterSpacing: "0.15em",
-                              textTransform: "uppercase",
-                              border: "1.5px solid #111111",
-                              borderRadius: "6px",
-                              background: "#111111",
-                              color: "#FFFFFF",
-                              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = "#D4AF37";
-                              e.currentTarget.style.borderColor = "#D4AF37";
-                              e.currentTarget.style.color = "#111111";
-                              e.currentTarget.style.boxShadow = "0 4px 12px rgba(212,175,55,0.4)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = "#111111";
-                              e.currentTarget.style.borderColor = "#111111";
-                              e.currentTarget.style.color = "#FFFFFF";
-                              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-                            }}
-                          >
-                            Book
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* CTA */}
