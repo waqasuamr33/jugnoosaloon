@@ -22,8 +22,7 @@ interface ServiceCategory {
   id: string;
   title: string;
   subtitle: string;
-  image: string;
-  fallbackImage: string;
+  image: string | null;
   services: ServiceItem[];
 }
 
@@ -41,15 +40,8 @@ export default function ServiceMatrix({ onOpenBooking }: ServiceMatrixProps) {
           getServices(),
         ]);
 
-        const fallbackImages = [
-          "/images/bridal_makeup.png",
-          "/images/beauty_facial.png",
-          "/images/hair_styling.png",
-          "/images/hair_washing.png",
-        ];
-
         if (categoriesData && categoriesData.length > 0) {
-          const mappedCategories: ServiceCategory[] = categoriesData.map((cat, idx) => {
+          const mappedCategories: ServiceCategory[] = categoriesData.map((cat) => {
             const matchedServices: ServiceItem[] = servicesData
               .filter((s) => s.category?.id === cat.id || s.category?.title?.toLowerCase() === cat.title.toLowerCase())
               .map((s) => {
@@ -65,17 +57,15 @@ export default function ServiceMatrix({ onOpenBooking }: ServiceMatrixProps) {
                 };
               });
 
-            const fallback = fallbackImages[idx % fallbackImages.length];
             const categoryImage = (cat.image || cat.image_url)
               ? normalizeImageUrl(cat.image_url, cat.image)
-              : fallback;
+              : null;
 
             return {
               id: `cat-${cat.id}`,
               title: cat.title,
               subtitle: cat.description || `Luxury ${cat.title} treatments at Jugnu's Saloon.`,
-              image: categoryImage,
-              fallbackImage: fallback,
+              image: (categoryImage && categoryImage.trim().length > 0) ? categoryImage : null,
               services: matchedServices,
             };
           });
@@ -216,17 +206,28 @@ export default function ServiceMatrix({ onOpenBooking }: ServiceMatrixProps) {
                 </div>
 
                 <div className="lg:col-span-5 relative h-80 lg:h-[420px] rounded-2xl overflow-hidden bg-[#F8F8F6]">
-                  <Image
-                    key={`${activeCategory.id}-${failedImages[activeCategory.id] ? 'fallback' : 'primary'}`}
-                    src={failedImages[activeCategory.id] ? activeCategory.fallbackImage : activeCategory.image}
-                    alt={activeCategory.title}
-                    fill
-                    onError={() => {
-                      setFailedImages((prev) => ({ ...prev, [activeCategory.id]: true }));
-                    }}
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  {activeCategory.image && !failedImages[activeCategory.id] ? (
+                    <>
+                      <Image
+                        key={activeCategory.id}
+                        src={activeCategory.image}
+                        alt={activeCategory.title}
+                        fill
+                        onError={() => {
+                          setFailedImages((prev) => ({ ...prev, [activeCategory.id]: true }));
+                        }}
+                        className="object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#161618] to-[#0A0A0B] text-white">
+                      <div className="w-16 h-16 rounded-full border border-[#D4AF37]/50 flex items-center justify-center bg-[#D4AF37]/10 mb-4">
+                        <span className="font-serif text-2xl font-bold text-[#D4AF37]">JS</span>
+                      </div>
+                      <h4 className="font-sans text-lg font-bold uppercase">{activeCategory.title}</h4>
+                    </div>
+                  )}
                   <div className="absolute bottom-6 left-6 right-6 text-white space-y-1">
                     <p className="text-[10px] uppercase font-bold tracking-widest text-[#D4AF37]">
                       Jugnu&apos;s Saloon Signature

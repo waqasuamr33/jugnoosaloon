@@ -15,6 +15,7 @@ interface ServiceItem {
   originalPrice?: string;
   discount?: number;
   description?: string;
+  imageUrl?: string | null;
 }
 
 interface CategoryData {
@@ -24,8 +25,7 @@ interface CategoryData {
   headline: string;
   subline: string;
   services: ServiceItem[];
-  image: string;
-  fallbackImage: string;
+  image: string | null;
   servicesCount?: number;
 }
 
@@ -75,12 +75,6 @@ export default function ServiceAndWorkflowSection({
         const hasServices = apiServices && apiServices.length > 0;
 
         const icons = ["✦", "◈", "◇", "◉", "❖", "⚜"];
-        const fallbackImages = [
-          "/images/bridal_makeup.png",
-          "/images/beauty_facial.png",
-          "/images/hair_styling.png",
-          "/images/hair_washing.png",
-        ];
 
         let updatedCategories: CategoryData[] = [];
 
@@ -92,6 +86,7 @@ export default function ServiceAndWorkflowSection({
                   .map((s) => {
                     const finalPrice = s.discounted_price || s.price;
                     const hasDiscount = s.discount && s.discount > 0 && s.discounted_price && s.discounted_price < s.price;
+                    const normalizedServiceImg = s.image_url ? normalizeImageUrl(s.image_url) : null;
                     return {
                       id: String(s.id),
                       name: s.title,
@@ -99,14 +94,27 @@ export default function ServiceAndWorkflowSection({
                       originalPrice: hasDiscount ? `Rs. ${s.price.toLocaleString()}` : undefined,
                       discount: s.discount || 0,
                       description: s.description || "",
+                      imageUrl: (normalizedServiceImg && normalizedServiceImg.trim().length > 0) ? normalizedServiceImg : null,
                     };
                   })
               : [];
 
-            const fallback = fallbackImages[idx % fallbackImages.length];
-            const categoryImage = (cat.image || cat.image_url)
-              ? normalizeImageUrl(cat.image_url, cat.image)
-              : fallback;
+            // Backend category image or first service image from backend
+            let categoryImage: string | null = null;
+            if (cat.image || cat.image_url) {
+              const normalized = normalizeImageUrl(cat.image_url, cat.image);
+              if (normalized && normalized.trim().length > 0) {
+                categoryImage = normalized;
+              }
+            }
+
+            // If category itself has no image, check if any matched service has a backend image
+            if (!categoryImage) {
+              const serviceWithImage = matchedServices.find((s) => s.imageUrl);
+              if (serviceWithImage && serviceWithImage.imageUrl) {
+                categoryImage = serviceWithImage.imageUrl;
+              }
+            }
 
             return {
               id: `cat-${cat.id}`,
@@ -116,7 +124,6 @@ export default function ServiceAndWorkflowSection({
               subline: cat.description || `Luxury ${cat.title} treatments at Jugnu's Saloon.`,
               services: matchedServices,
               image: categoryImage,
-              fallbackImage: fallback,
               servicesCount: cat.services_count ?? matchedServices.length,
             };
           });
@@ -520,44 +527,75 @@ export default function ServiceAndWorkflowSection({
                 </div>
 
                 {/* RIGHT — Category Hero Image & Gold Frame */}
-                <div className="relative min-h-[400px] lg:min-h-[580px] overflow-hidden bg-[#F8F8F6]">
-                  <Image
-                    key={`${current.id}-${failedImages[current.id] ? 'fallback' : 'primary'}`}
-                    src={failedImages[current.id] ? current.fallbackImage : current.image}
-                    alt={current.headline}
-                    fill
-                    priority
-                    onError={() => {
-                      setFailedImages((prev) => ({ ...prev, [current.id]: true }));
-                    }}
-                    className="object-cover transition-transform duration-700 hover:scale-105"
-                  />
-                  <div
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                      background:
-                        "linear-gradient(90deg, rgba(255,255,255,0.3) 0%, transparent 40%)",
-                    }}
-                  />
+                {(() => {
+                  const activeService = current.services.find((s) => s.id === expandedServiceId);
+                  const displayImage = activeService?.imageUrl || current.image;
+                  const imageFailed = Boolean(displayImage && failedImages[displayImage]);
 
-                  {/* Gold Glowing Card Overlay */}
-                  <div
-                    className="absolute bottom-8 left-8 right-8 p-6 rounded-2xl border border-[#D4AF37]/40 backdrop-blur-md bg-white/90 text-[#111111] space-y-2 shadow-xl"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
-                      <span className="text-[10px] uppercase font-bold tracking-widest text-[#996515]">
-                        Signature Treatment
-                      </span>
+                  return (
+                    <div className="relative min-h-[400px] lg:min-h-[580px] overflow-hidden bg-[#F8F8F6]">
+                      {displayImage && !imageFailed ? (
+                        <>
+                          <Image
+                            key={displayImage}
+                            src={displayImage}
+                            alt={activeService?.name || current.headline}
+                            fill
+                            priority
+                            onError={() => {
+                              setFailedImages((prev) => ({ ...prev, [displayImage]: true }));
+                            }}
+                            className="object-cover transition-transform duration-700 hover:scale-105"
+                          />
+                          <div
+                            className="absolute inset-0 pointer-events-none"
+                            style={{
+                              background:
+                                "linear-gradient(90deg, rgba(255,255,255,0.3) 0%, transparent 40%)",
+                            }}
+                          />
+
+                          {/* Gold Glowing Card Overlay */}
+                          <div
+                            className="absolute bottom-8 left-8 right-8 p-6 rounded-2xl border border-[#D4AF37]/40 backdrop-blur-md bg-white/90 text-[#111111] space-y-2 shadow-xl"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
+                              <span className="text-[10px] uppercase font-bold tracking-widest text-[#996515]">
+                                {activeService ? "Selected Service" : "Signature Treatment"}
+                              </span>
+                            </div>
+                            <h4 className="font-sans text-xl font-bold uppercase text-[#111111]">
+                              {activeService ? activeService.name : current.headline}
+                            </h4>
+                            <p className="text-xs text-slate-600 font-normal">
+                              Reserve your session with senior artists &amp; hydrafacial experts.
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        /* Luxury branded presentation when category/service has no backend image */
+                        <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-[#161618] via-[#111111] to-[#0A0A0B] text-white">
+                          <div className="w-20 h-20 rounded-full border border-[#D4AF37]/50 flex items-center justify-center bg-[#D4AF37]/10 mb-6 shadow-[0_0_35px_rgba(212,175,55,0.25)]">
+                            <span className="font-serif text-3xl font-bold text-[#D4AF37] tracking-wider">
+                              JS
+                            </span>
+                          </div>
+                          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#D4AF37] mb-2">
+                            Jugnu&apos;s Saloon Signature
+                          </p>
+                          <h4 className="font-sans text-2xl font-extrabold uppercase text-white tracking-wide max-w-xs mb-3">
+                            {current.headline}
+                          </h4>
+                          <p className="text-xs text-slate-300 max-w-sm leading-relaxed mb-6">
+                            {current.subline}
+                          </p>
+                          <div className="w-16 h-[2px] bg-[#D4AF37] rounded-full" />
+                        </div>
+                      )}
                     </div>
-                    <h4 className="font-sans text-xl font-bold uppercase text-[#111111]">
-                      {current.headline}
-                    </h4>
-                    <p className="text-xs text-slate-600 font-normal">
-                      Reserve your session with senior artists & hydrafacial experts.
-                    </p>
-                  </div>
-                </div>
+                  );
+                })()}
               </div>
             )}
           </>

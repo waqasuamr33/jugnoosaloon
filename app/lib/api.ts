@@ -313,7 +313,7 @@ export function normalizeImageUrl(url?: string | null, path?: string | null): st
     return `https://software.jugnussaloon.com${cleanPath}`;
   }
 
-  return '/images/hero_salon.png';
+  return '';
 }
 
 /**

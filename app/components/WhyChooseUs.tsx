@@ -28,7 +28,8 @@ export default function WhyChooseUs({ onOpenBooking }: WhyChooseUsProps) {
               src="/images/22.jpeg"
               alt="Diverse Styling at Jugnu's Saloon"
               fill
-              className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
+              className="object-cover scale-110 -translate-x-5 group-hover:scale-115 transition-transform duration-700"
+              style={{ objectPosition: "60% center" }}
             />
 
             {/* Dark gradient overlay */}
