@@ -35,7 +35,7 @@ const slides = [
     titleLine1: "PROFESSIONAL",
     titleLine2: "AESTHETIC LOUNGE",
     desc: "Where you reveal the best version of you with signature skin therapy, custom aesthetic care & organic radiance rituals.",
-    image: "/images/hero-4.png",
+    image: "/images/hero-4.jpeg",
     mobileImage: "/images/hero-r.jpg",
     alt: "Professional Aesthetic Lounge at Jugnu's Saloon",
     objectPosition: "center center",
