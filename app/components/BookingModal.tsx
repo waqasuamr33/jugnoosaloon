@@ -103,6 +103,7 @@ export default function BookingModal({
   const [serviceSearch, setServiceSearch] = useState<string>("");
   const [liveCategories, setLiveCategories] = useState<ServiceCategoryItem[]>([]);
   const [expandedCategory, setExpandedCategory] = useState<number | null>(null);
+  const [expandedDescId, setExpandedDescId] = useState<number | null>(null);
 
   // Autofill client details when customer logs in or is authenticated
   useEffect(() => {
@@ -580,14 +581,35 @@ export default function BookingModal({
                         No services found for &ldquo;{serviceSearch}&rdquo;
                       </div>
                     ) : (
-                      <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                      <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
                         {filtered.map((service) => {
                           const finalPrice = service.discounted_price || service.price;
                           const isChecked = selectedServices.includes(service.id);
+                          const isExpanded = expandedDescId === service.id;
+                          const hasDescription = Boolean(service.description && service.description.trim().length > 0);
+                          const isLongDescription = Boolean(
+                            hasDescription && (
+                              (service.description && service.description.trim().length > 60) ||
+                              (service.description && service.description.split(/\r?\n/).filter((l) => l.trim().length > 0).length > 2)
+                            )
+                          );
+
                           return (
-                            <button
+                            <div
                               key={service.id}
-                              type="button"
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  setSelectedServices((prev) =>
+                                    prev.includes(service.id)
+                                      ? prev.filter((id) => id !== service.id)
+                                      : [...prev, service.id]
+                                  );
+                                  setApiError("");
+                                }
+                              }}
                               onClick={() => {
                                 setSelectedServices((prev) =>
                                   prev.includes(service.id)
@@ -596,14 +618,14 @@ export default function BookingModal({
                                 );
                                 setApiError("");
                               }}
-                              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-all cursor-pointer ${
+                              className={`w-full flex items-start justify-between p-3 sm:px-4 sm:py-3 rounded-xl border text-left transition-all cursor-pointer ${
                                 isChecked
                                   ? "bg-[#111111] border-[#D4AF37] text-white shadow-md"
                                   : "bg-[#FAFAFA] border-slate-200 text-[#111111] hover:border-[#D4AF37] hover:bg-slate-50"
                               }`}
                             >
-                              <div className="flex items-center gap-3">
-                                <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                              <div className="flex items-start gap-3 min-w-0 flex-1">
+                                <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
                                   isChecked ? "bg-[#D4AF37] border-[#D4AF37]" : "border-slate-300"
                                 }`}>
                                   {isChecked && (
@@ -612,14 +634,63 @@ export default function BookingModal({
                                     </svg>
                                   )}
                                 </span>
-                                <div>
-                                  <span className="text-xs font-semibold leading-tight block">{service.title}</span>
-                                  {service.category && (
-                                    <span className="text-[9px] text-slate-400 font-medium">{service.category.title}</span>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-xs font-semibold leading-tight block">{service.title}</span>
+                                    {service.category && (
+                                      <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${
+                                        isChecked ? "bg-white/10 text-slate-300" : "bg-slate-200 text-slate-600"
+                                      }`}>
+                                        {service.category.title}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* 2-line Description with Read More / Show Less */}
+                                  {hasDescription && (
+                                    <div className="mt-1">
+                                      <p
+                                        className={`text-[11px] font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
+                                          isChecked ? "text-slate-300" : "text-slate-500"
+                                        } ${
+                                          isExpanded ? "" : "line-clamp-2"
+                                        }`}
+                                        style={
+                                          !isExpanded
+                                            ? {
+                                                display: "-webkit-box",
+                                                WebkitLineClamp: 2,
+                                                WebkitBoxOrient: "vertical",
+                                                overflow: "hidden",
+                                              }
+                                            : undefined
+                                        }
+                                      >
+                                        {service.description}
+                                      </p>
+
+                                      {isLongDescription && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setExpandedDescId(isExpanded ? null : service.id);
+                                          }}
+                                          className={`mt-1 text-[10px] font-bold transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none ${
+                                            isChecked ? "text-[#D4AF37] hover:text-white" : "text-[#996515] hover:text-[#111111]"
+                                          }`}
+                                        >
+                                          <span>{isExpanded ? "Show Less" : "Read More"}</span>
+                                          <span className="text-[8px] leading-none transition-transform duration-200">
+                                            {isExpanded ? "▲" : "▼"}
+                                          </span>
+                                        </button>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                               </div>
-                              <div className="text-right shrink-0 ml-2">
+                              <div className="text-right shrink-0 ml-3 pt-0.5">
                                 <span className={`text-xs font-bold font-mono ${
                                   isChecked ? "text-[#D4AF37]" : "text-[#996515]"
                                 }`}>
@@ -629,7 +700,7 @@ export default function BookingModal({
                                   <span className="block text-[9px] text-emerald-400 font-bold">{service.discount}% OFF</span>
                                 )}
                               </div>
-                            </button>
+                            </div>
                           );
                         })}
                       </div>
@@ -672,7 +743,7 @@ export default function BookingModal({
                   }
 
                   return (
-                    <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                    <div className="space-y-1.5 max-h-80 overflow-y-auto pr-1">
                       {categoryList.map((cat) => {
                         const isOpen = expandedCategory === cat.id;
                         const selectedInCat = cat.services.filter((s) => selectedServices.includes(s.id)).length;
@@ -717,10 +788,31 @@ export default function BookingModal({
                                 {cat.services.map((service) => {
                                   const finalPrice = service.discounted_price || service.price;
                                   const isChecked = selectedServices.includes(service.id);
+                                  const isExpanded = expandedDescId === service.id;
+                                  const hasDescription = Boolean(service.description && service.description.trim().length > 0);
+                                  const isLongDescription = Boolean(
+                                    hasDescription && (
+                                      (service.description && service.description.trim().length > 60) ||
+                                      (service.description && service.description.split(/\r?\n/).filter((l) => l.trim().length > 0).length > 2)
+                                    )
+                                  );
+
                                   return (
-                                    <button
+                                    <div
                                       key={service.id}
-                                      type="button"
+                                      role="button"
+                                      tabIndex={0}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                          e.preventDefault();
+                                          setSelectedServices((prev) =>
+                                            prev.includes(service.id)
+                                              ? prev.filter((id) => id !== service.id)
+                                              : [...prev, service.id]
+                                          );
+                                          setApiError("");
+                                        }
+                                      }}
                                       onClick={() => {
                                         setSelectedServices((prev) =>
                                           prev.includes(service.id)
@@ -729,14 +821,14 @@ export default function BookingModal({
                                         );
                                         setApiError("");
                                       }}
-                                      className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors cursor-pointer ${
+                                      className={`w-full flex items-start justify-between px-4 py-3 text-left transition-colors cursor-pointer ${
                                         isChecked
                                           ? "bg-[#D4AF37]/10"
                                           : "hover:bg-slate-50"
                                       }`}
                                     >
-                                      <div className="flex items-center gap-3">
-                                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
                                           isChecked ? "bg-[#D4AF37] border-[#D4AF37]" : "border-slate-300"
                                         }`}>
                                           {isChecked && (
@@ -745,19 +837,68 @@ export default function BookingModal({
                                             </svg>
                                           )}
                                         </span>
-                                        <span className="text-xs font-semibold text-[#111111] leading-tight">{service.title}</span>
+                                        <div className="min-w-0 flex-1">
+                                          <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="text-xs font-semibold text-[#111111] leading-tight">{service.title}</span>
+                                            {service.discount && service.discount > 0 ? (
+                                              <span className="bg-[#111111] text-[#D4AF37] text-[9px] font-extrabold px-1.5 py-0.2 rounded-full uppercase">
+                                                {service.discount}% OFF
+                                              </span>
+                                            ) : null}
+                                          </div>
+
+                                          {/* 2-line Description with Read More / Show Less */}
+                                          {hasDescription && (
+                                            <div className="mt-1">
+                                              <p
+                                                className={`text-[11px] text-slate-500 font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
+                                                  isExpanded ? "" : "line-clamp-2"
+                                                }`}
+                                                style={
+                                                  !isExpanded
+                                                    ? {
+                                                        display: "-webkit-box",
+                                                        WebkitLineClamp: 2,
+                                                        WebkitBoxOrient: "vertical",
+                                                        overflow: "hidden",
+                                                      }
+                                                    : undefined
+                                                }
+                                              >
+                                                {service.description}
+                                              </p>
+
+                                              {isLongDescription && (
+                                                <button
+                                                  type="button"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setExpandedDescId(isExpanded ? null : service.id);
+                                                  }}
+                                                  className="mt-1 text-[10px] font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none"
+                                                >
+                                                  <span>{isExpanded ? "Show Less" : "Read More"}</span>
+                                                  <span className="text-[8px] leading-none transition-transform duration-200">
+                                                    {isExpanded ? "▲" : "▼"}
+                                                  </span>
+                                                </button>
+                                              )}
+                                            </div>
+                                          )}
+                                        </div>
                                       </div>
-                                      <div className="text-right shrink-0 ml-2">
+
+                                      <div className="text-right shrink-0 ml-3 pt-0.5">
                                         <span className={`text-xs font-bold font-mono ${
-                                          isChecked ? "text-[#996515]" : "text-slate-500"
+                                          isChecked ? "text-[#996515]" : "text-slate-600"
                                         }`}>
                                           Rs. {finalPrice.toLocaleString()}
                                         </span>
                                         {!!service.discount && service.discount > 0 && (
-                                          <span className="block text-[9px] text-emerald-500 font-bold">{service.discount}% OFF</span>
+                                          <span className="block text-[9px] text-emerald-600 font-bold">{service.discount}% OFF</span>
                                         )}
                                       </div>
-                                    </button>
+                                    </div>
                                   );
                                 })}
                               </div>

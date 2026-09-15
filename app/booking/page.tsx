@@ -87,6 +87,7 @@ export default function BookingPage() {
   const [bankAccounts, setBankAccounts] = useState<BankAccountItem[]>([]);
   const [loadingBanks, setLoadingBanks] = useState<boolean>(true);
   const [copiedAccount, setCopiedAccount] = useState<string | null>(null);
+  const [selectedServiceDescExpanded, setSelectedServiceDescExpanded] = useState<boolean>(false);
 
   // Autofill if customer is logged in
   useEffect(() => {
@@ -466,7 +467,10 @@ export default function BookingPage() {
                 </label>
                 <select
                   value={selectedService}
-                  onChange={(e) => setSelectedService(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedService(e.target.value);
+                    setSelectedServiceDescExpanded(false);
+                  }}
                   className="w-full p-3.5 rounded-xl bg-[#FAFAFA] border border-slate-300 text-xs font-medium text-[#111111] focus:border-[#D4AF37] focus:outline-none"
                 >
                   {(liveServices.length > 0 ? liveServices : FALLBACK_SERVICES).map((service) => {
@@ -483,6 +487,66 @@ export default function BookingPage() {
                     );
                   })}
                 </select>
+
+                {/* Selected Service Description with Read More / Show Less */}
+                {(() => {
+                  const servicesList = liveServices.length > 0 ? liveServices : FALLBACK_SERVICES;
+                  const currentService = servicesList.find((s) => String(s.id) === selectedService) || servicesList[0];
+                  const hasDescription = Boolean(currentService?.description && currentService.description.trim().length > 0);
+                  const isLongDescription = Boolean(
+                    hasDescription && (
+                      (currentService?.description && currentService.description.trim().length > 60) ||
+                      (currentService?.description && currentService.description.split(/\r?\n/).filter((l) => l.trim().length > 0).length > 2)
+                    )
+                  );
+
+                  if (!hasDescription || !currentService) return null;
+
+                  return (
+                    <div className="mt-2.5 p-3.5 rounded-xl bg-[#FAF8F2] border border-[#D4AF37]/30">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-[10px] font-bold text-[#996515] uppercase tracking-wider">
+                          Service Details
+                        </span>
+                        {currentService.discount && currentService.discount > 0 ? (
+                          <span className="bg-[#111111] text-[#D4AF37] text-[9px] font-extrabold px-1.5 py-0.2 rounded-full uppercase">
+                            {currentService.discount}% OFF
+                          </span>
+                        ) : null}
+                      </div>
+                      <p
+                        className={`text-xs text-slate-600 font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
+                          selectedServiceDescExpanded ? "" : "line-clamp-2"
+                        }`}
+                        style={
+                          !selectedServiceDescExpanded
+                            ? {
+                                display: "-webkit-box",
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: "vertical",
+                                overflow: "hidden",
+                              }
+                            : undefined
+                        }
+                      >
+                        {currentService.description}
+                      </p>
+
+                      {isLongDescription && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedServiceDescExpanded(!selectedServiceDescExpanded)}
+                          className="mt-1.5 text-[11px] font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none"
+                        >
+                          <span>{selectedServiceDescExpanded ? "Show Less" : "Read More"}</span>
+                          <span className="text-[8px] leading-none transition-transform duration-200">
+                            {selectedServiceDescExpanded ? "▲" : "▼"}
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
