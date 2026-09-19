@@ -160,7 +160,7 @@ export default function ServiceMatrix({ onOpenBooking }: ServiceMatrixProps) {
                     </p>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 luxury-scrollbar">
                     {activeCategory.services.map((service) => (
                       <div
                         key={service.id}
@@ -205,7 +205,7 @@ export default function ServiceMatrix({ onOpenBooking }: ServiceMatrixProps) {
                   </div>
                 </div>
 
-                <div className="lg:col-span-5 relative h-80 lg:h-[420px] rounded-2xl overflow-hidden bg-[#F8F8F6]">
+                <div className="lg:col-span-5 lg:sticky lg:top-8 relative h-80 lg:h-[420px] rounded-2xl overflow-hidden bg-[#F8F8F6]">
                   {activeCategory.image && !failedImages[activeCategory.id] ? (
                     <>
                       <Image

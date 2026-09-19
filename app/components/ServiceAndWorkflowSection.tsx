@@ -309,7 +309,7 @@ export default function ServiceAndWorkflowSection({
             {/* ── Main Panel (White Canvas & Gold Flare Glow) ──────────────────── */}
             {current && (
               <div
-                className="grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden relative"
+                className="grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden relative lg:h-[680px]"
                 style={{
                   border: "1px solid rgba(212,175,55,0.35)",
                   borderRadius: "24px",
@@ -328,20 +328,27 @@ export default function ServiceAndWorkflowSection({
 
                 {/* LEFT — Service List */}
                 <div
-                  className="flex flex-col justify-between relative z-10"
+                  className="flex flex-col h-full relative z-10 overflow-hidden border-b lg:border-b-0 border-slate-200"
                   style={{
-                    padding: "44px 48px",
+                    padding: "36px 32px 28px 36px",
                     borderRight: "1px solid rgba(0,0,0,0.08)",
                   }}
                 >
                   {/* heading */}
-                  <div className="mb-8 space-y-1">
-                    <h3
-                      className="font-sans font-extrabold text-[#111111] uppercase leading-snug"
-                      style={{ fontSize: "clamp(1.35rem, 2.2vw, 1.75rem)" }}
-                    >
-                      {current.headline}
-                    </h3>
+                  <div className="flex-shrink-0 mb-4 space-y-1.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <h3
+                        className="font-sans font-extrabold text-[#111111] uppercase leading-snug"
+                        style={{ fontSize: "clamp(1.25rem, 2vw, 1.65rem)" }}
+                      >
+                        {current.headline}
+                      </h3>
+                      {current.services && current.services.length > 0 && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#996515] bg-[#FAF8F2] border border-[#D4AF37]/30 px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0">
+                          {current.services.length} {current.services.length === 1 ? "Treatment" : "Treatments"}
+                        </span>
+                      )}
+                    </div>
                     <p
                       className="text-xs text-slate-600 font-normal leading-relaxed"
                     >
@@ -349,158 +356,164 @@ export default function ServiceAndWorkflowSection({
                     </p>
                   </div>
 
-                  {/* service rows */}
+                  {/* service rows - SCROLLABLE CONTAINER */}
                   <div
-                    className="flex-1"
+                    className="flex-1 overflow-y-auto overscroll-contain pr-2 sm:pr-3 max-h-[440px] lg:max-h-none luxury-scrollbar scroll-smooth"
                     style={{
                       borderTop: "1px solid rgba(0,0,0,0.08)",
+                      scrollbarWidth: "thin",
+                      scrollbarColor: "#D4AF37 rgba(0, 0, 0, 0.04)",
                     }}
                   >
-                    {current.services.map((item, idx) => {
-                      const isExpanded = expandedServiceId === item.id;
-                      const hasDescription = Boolean(item.description && item.description.trim().length > 0);
-                      const isLongDescription = Boolean(
-                        hasDescription && (
-                          (item.description && item.description.trim().length > 60) ||
-                          (item.description && item.description.split(/\r?\n/).filter((l) => l.trim().length > 0).length > 2)
-                        )
-                      );
+                    {current.services.length === 0 ? (
+                      <div className="py-16 text-center text-slate-400 text-xs uppercase tracking-wider">
+                        No treatments available in this category yet.
+                      </div>
+                    ) : (
+                      current.services.map((item, idx) => {
+                        const isExpanded = expandedServiceId === item.id;
+                        const hasDescription = Boolean(item.description && item.description.trim().length > 0);
+                        const isLongDescription = Boolean(
+                          hasDescription && (
+                            (item.description && item.description.trim().length > 60) ||
+                            (item.description && item.description.split(/\r?\n/).filter((l) => l.trim().length > 0).length > 2)
+                          )
+                        );
 
-                      return (
-                        <div
-                          key={item.id}
-                          onClick={() => {
-                            if (expandedServiceId && expandedServiceId !== item.id) {
-                              setExpandedServiceId(null);
-                            }
-                          }}
-                          className="group flex items-start justify-between gap-4 transition-all duration-200 hover:bg-[#FAF8F2] px-3 -mx-3 rounded-xl cursor-default"
-                          style={{
-                            paddingTop: "16px",
-                            paddingBottom: "16px",
-                            borderBottom:
-                              idx < current.services.length - 1
-                                ? "1px solid rgba(0,0,0,0.06)"
-                                : "none",
-                          }}
-                        >
-                          {/* name + discount badge + description */}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                              <p
-                                className="font-bold text-[#111111] text-sm leading-snug group-hover:text-[#996515] transition-colors"
-                              >
-                                {item.name}
-                              </p>
-
-                              {item.discount && item.discount > 0 ? (
-                                <span className="bg-[#111111] text-[#D4AF37] text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider border border-[#D4AF37]/40 shadow-sm">
-                                  {item.discount}% OFF
-                                </span>
-                              ) : null}
-                            </div>
-
-                            {/* 2-line Description with Read More / Show Less */}
-                            {hasDescription && (
-                              <div className="mt-1.5">
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => {
+                              if (expandedServiceId && expandedServiceId !== item.id) {
+                                setExpandedServiceId(null);
+                              }
+                            }}
+                            className="group flex items-start justify-between gap-3 sm:gap-4 transition-all duration-200 hover:bg-[#FAF8F2] px-3 py-3.5 rounded-xl cursor-default"
+                            style={{
+                              borderBottom:
+                                idx < current.services.length - 1
+                                  ? "1px solid rgba(0,0,0,0.06)"
+                                  : "none",
+                            }}
+                          >
+                            {/* name + discount badge + description */}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center space-x-2 flex-wrap gap-y-1">
                                 <p
-                                  className={`text-xs text-slate-500 font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
-                                    isExpanded ? "" : "line-clamp-2"
-                                  }`}
-                                  style={
-                                    !isExpanded
-                                      ? {
-                                          display: "-webkit-box",
-                                          WebkitLineClamp: 2,
-                                          WebkitBoxOrient: "vertical",
-                                          overflow: "hidden",
-                                        }
-                                      : undefined
-                                  }
+                                  className="font-bold text-[#111111] text-sm leading-snug group-hover:text-[#996515] transition-colors"
                                 >
-                                  {item.description}
+                                  {item.name}
                                 </p>
 
-                                {isLongDescription && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setExpandedServiceId(isExpanded ? null : item.id);
-                                    }}
-                                    className="mt-1 text-[11px] font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none"
-                                  >
-                                    <span>{isExpanded ? "Show Less" : "Read More"}</span>
-                                    <span className="text-[8px] leading-none transition-transform duration-200">
-                                      {isExpanded ? "▲" : "▼"}
-                                    </span>
-                                  </button>
-                                )}
+                                {item.discount && item.discount > 0 ? (
+                                  <span className="bg-[#111111] text-[#D4AF37] text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider border border-[#D4AF37]/40 shadow-sm">
+                                    {item.discount}% OFF
+                                  </span>
+                                ) : null}
                               </div>
-                            )}
-                          </div>
 
-                          {/* price + book */}
-                          <div className="flex items-center gap-5 flex-shrink-0 pt-0.5">
-                            <div className="text-right">
-                              <span
-                                className="font-bold font-mono text-base block text-[#996515]"
-                              >
-                                {item.price}
-                              </span>
-                              {item.originalPrice ? (
-                                <span className="font-mono text-[11px] text-slate-400 line-through block">
-                                  {item.originalPrice}
-                                </span>
-                              ) : null}
+                              {/* 2-line Description with Read More / Show Less */}
+                              {hasDescription && (
+                                <div className="mt-1.5">
+                                  <p
+                                    className={`text-xs text-slate-500 font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
+                                      isExpanded ? "" : "line-clamp-2"
+                                    }`}
+                                    style={
+                                      !isExpanded
+                                        ? {
+                                            display: "-webkit-box",
+                                            WebkitLineClamp: 2,
+                                            WebkitBoxOrient: "vertical",
+                                            overflow: "hidden",
+                                          }
+                                        : undefined
+                                    }
+                                  >
+                                    {item.description}
+                                  </p>
+
+                                  {isLongDescription && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setExpandedServiceId(isExpanded ? null : item.id);
+                                      }}
+                                      className="mt-1 text-[11px] font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none"
+                                    >
+                                      <span>{isExpanded ? "Show Less" : "Read More"}</span>
+                                      <span className="text-[8px] leading-none transition-transform duration-200">
+                                        {isExpanded ? "▲" : "▼"}
+                                      </span>
+                                    </button>
+                                  )}
+                                </div>
+                              )}
                             </div>
 
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onOpenBooking(item.name);
-                              }}
-                              className="cursor-pointer transition-all duration-200"
-                              style={{
-                                padding: "8px 20px",
-                                fontSize: "10px",
-                                fontWeight: 700,
-                                letterSpacing: "0.15em",
-                                textTransform: "uppercase",
-                                border: "1.5px solid #111111",
-                                borderRadius: "6px",
-                                background: "#111111",
-                                color: "#FFFFFF",
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background = "#D4AF37";
-                                e.currentTarget.style.borderColor = "#D4AF37";
-                                e.currentTarget.style.color = "#111111";
-                                e.currentTarget.style.boxShadow = "0 4px 12px rgba(212,175,55,0.4)";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background = "#111111";
-                                e.currentTarget.style.borderColor = "#111111";
-                                e.currentTarget.style.color = "#FFFFFF";
-                                e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-                              }}
-                            >
-                              Book
-                            </button>
+                            {/* price + book */}
+                            <div className="flex items-center gap-3 sm:gap-5 flex-shrink-0 pt-0.5">
+                              <div className="text-right">
+                                <span
+                                  className="font-bold font-mono text-base block text-[#996515]"
+                                >
+                                  {item.price}
+                                </span>
+                                {item.originalPrice ? (
+                                  <span className="font-mono text-[11px] text-slate-400 line-through block">
+                                    {item.originalPrice}
+                                  </span>
+                                ) : null}
+                              </div>
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onOpenBooking(item.name);
+                                }}
+                                className="cursor-pointer transition-all duration-200"
+                                style={{
+                                  padding: "8px 18px",
+                                  fontSize: "10px",
+                                  fontWeight: 700,
+                                  letterSpacing: "0.15em",
+                                  textTransform: "uppercase",
+                                  border: "1.5px solid #111111",
+                                  borderRadius: "6px",
+                                  background: "#111111",
+                                  color: "#FFFFFF",
+                                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = "#D4AF37";
+                                  e.currentTarget.style.borderColor = "#D4AF37";
+                                  e.currentTarget.style.color = "#111111";
+                                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(212,175,55,0.4)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = "#111111";
+                                  e.currentTarget.style.borderColor = "#111111";
+                                  e.currentTarget.style.color = "#FFFFFF";
+                                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+                                }}
+                              >
+                                Book
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
                   </div>
 
                   {/* CTA */}
-                  <div className="mt-8 pt-6" style={{ borderTop: "1px solid rgba(0,0,0,0.08)" }}>
+                  <div className="flex-shrink-0 mt-4 pt-4 bg-white/95" style={{ borderTop: "1px solid rgba(0,0,0,0.08)" }}>
                     <button
                       onClick={() => onOpenBooking()}
                       className="w-full cursor-pointer font-bold uppercase tracking-widest transition-all duration-300"
                       style={{
-                        padding: "16px 0",
+                        padding: "15px 0",
                         fontSize: "11px",
                         borderRadius: "8px",
                         background: "#111111",
@@ -533,7 +546,7 @@ export default function ServiceAndWorkflowSection({
                   const imageFailed = Boolean(displayImage && failedImages[displayImage]);
 
                   return (
-                    <div className="relative min-h-[400px] lg:min-h-[580px] overflow-hidden bg-[#F8F8F6]">
+                    <div className="relative h-80 sm:h-96 lg:h-full min-h-[300px] overflow-hidden bg-[#F8F8F6]">
                       {displayImage && !imageFailed ? (
                         <>
                           <Image
@@ -541,6 +554,7 @@ export default function ServiceAndWorkflowSection({
                             src={displayImage}
                             alt={activeService?.name || current.headline}
                             fill
+                            sizes="(max-width: 1024px) 100vw, 50vw"
                             priority
                             onError={() => {
                               setFailedImages((prev) => ({ ...prev, [displayImage]: true }));
@@ -551,13 +565,13 @@ export default function ServiceAndWorkflowSection({
                             className="absolute inset-0 pointer-events-none"
                             style={{
                               background:
-                                "linear-gradient(90deg, rgba(255,255,255,0.3) 0%, transparent 40%)",
+                                "linear-gradient(90deg, rgba(255,255,255,0.25) 0%, transparent 35%)",
                             }}
                           />
 
                           {/* Gold Glowing Card Overlay */}
                           <div
-                            className="absolute bottom-8 left-8 right-8 p-6 rounded-2xl border border-[#D4AF37]/40 backdrop-blur-md bg-white/90 text-[#111111] space-y-2 shadow-xl"
+                            className="absolute bottom-6 left-6 right-6 lg:bottom-8 lg:left-8 lg:right-8 p-5 lg:p-6 rounded-2xl border border-[#D4AF37]/40 backdrop-blur-md bg-white/90 text-[#111111] space-y-1.5 shadow-xl"
                           >
                             <div className="flex items-center space-x-2">
                               <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
@@ -565,10 +579,10 @@ export default function ServiceAndWorkflowSection({
                                 {activeService ? "Selected Service" : "Signature Treatment"}
                               </span>
                             </div>
-                            <h4 className="font-sans text-xl font-bold uppercase text-[#111111]">
+                            <h4 className="font-sans text-lg lg:text-xl font-bold uppercase text-[#111111] line-clamp-1">
                               {activeService ? activeService.name : current.headline}
                             </h4>
-                            <p className="text-xs text-slate-600 font-normal">
+                            <p className="text-xs text-slate-600 font-normal line-clamp-2">
                               Reserve your session with senior artists &amp; hydrafacial experts.
                             </p>
                           </div>

@@ -101,3 +101,29 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-thumb:hover {
   background: #D4AF37;
 }
+
+/* Luxury Gold Scrollbar */
+.luxury-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #D4AF37 rgba(0, 0, 0, 0.04);
+}
+
+.luxury-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.luxury-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 9999px;
+  margin: 6px 0;
+}
+
+.luxury-scrollbar::-webkit-scrollbar-thumb {
+  background: #D4AF37;
+  border-radius: 9999px;
+}
+
+.luxury-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #996515;
+}
+
