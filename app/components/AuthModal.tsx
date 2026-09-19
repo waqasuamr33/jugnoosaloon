@@ -126,13 +126,13 @@ export default function AuthModal() {
           </button>
 
           <div className="flex items-center space-x-3 mb-2">
-            <div className="relative w-9 h-9 rounded-full overflow-hidden border border-[#D4AF37] bg-white p-0.5">
+            <div className="relative w-9 h-9 rounded-full overflow-hidden flex items-center justify-center">
               <Image
                 src="/logo.png"
                 alt="Jugnu's Saloon"
                 width={36}
                 height={36}
-                className="object-cover rounded-full"
+                className="w-full h-full object-contain"
               />
             </div>
             <div>

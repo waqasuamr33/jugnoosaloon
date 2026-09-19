@@ -35,12 +35,12 @@ export default function AboutSection({ onOpenBooking }: AboutSectionProps) {
               </div>
 
               {/* Gold Emblem Crest Badge */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white border-2 border-[#D4AF37] shadow-xl flex items-center justify-center p-2 z-20">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 sm:w-24 sm:h-24 rounded-full shadow-2xl flex items-center justify-center z-20 overflow-hidden">
                 <Image
                   src="/logo.png"
                   alt="Jugnu's Saloon Logo"
-                  width={80}
-                  height={80}
+                  width={96}
+                  height={96}
                   className="w-full h-full object-contain"
                 />
               </div>

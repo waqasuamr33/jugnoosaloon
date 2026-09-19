@@ -29,13 +29,13 @@ export default function Footer({ onOpenBooking }: FooterProps) {
         {/* Top Logo & Newsletter Section */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 pb-16 border-b border-white/10">
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 rounded-full border-2 border-[#D4AF37] p-0.5 shadow-[0_0_20px_rgba(212,175,55,0.3)]">
+            <div className="w-16 h-16 rounded-full shadow-[0_0_20px_rgba(212,175,55,0.3)] flex items-center justify-center">
               <Image
                 src="/logo.png"
                 alt="Jugnu's Saloon Emblem"
                 width={64}
                 height={64}
-                className="w-full h-full rounded-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
             <div>

@@ -344,13 +344,13 @@ export default function BookingPage() {
       <section className="pt-36 pb-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 shadow-xl">
           <div className="text-center space-y-2 mb-10">
-            <div className="w-14 h-14 rounded-full border-2 border-[#D4AF37] p-0.5 mx-auto bg-white">
+            <div className="w-14 h-14 rounded-full overflow-hidden mx-auto flex items-center justify-center">
               <Image
                 src="/logo.png"
                 alt="JS Logo"
                 width={56}
                 height={56}
-                className="w-full h-full rounded-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
             <h1 className="font-sans text-3xl font-extrabold uppercase text-[#111111]">

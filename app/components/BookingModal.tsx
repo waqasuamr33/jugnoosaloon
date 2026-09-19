@@ -391,13 +391,13 @@ export default function BookingModal({
         {/* Header Bar */}
         <div className="p-6 bg-[#FAFAFA] border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full border-2 border-[#D4AF37] p-0.5 bg-white">
+            <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center">
               <Image
                 src="/logo.png"
                 alt="JS Logo"
                 width={40}
                 height={40}
-                className="w-full h-full rounded-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
             <div>

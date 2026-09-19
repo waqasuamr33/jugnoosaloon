@@ -48,15 +48,14 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
       <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center space-x-3 group">
-          <div className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-[#D4AF37] p-0.5 group-hover:scale-105 transition-transform bg-white">
-            <Image
-              src="/logo.png"
-              alt="Jugnu's Saloon Logo"
-              width={44}
-              height={44}
-              className="object-cover rounded-full"
-            />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="Jugnu's Saloon Logo"
+            width={52}
+            height={52}
+            className="w-12 h-12 sm:w-13 sm:h-13 object-contain group-hover:scale-105 transition-transform"
+            priority
+          />
           <div className="flex flex-col">
             <span className="font-sans text-lg sm:text-xl font-bold tracking-tight text-[#111111] group-hover:text-[#D4AF37] transition-colors">
               JUGNU&apos;S
