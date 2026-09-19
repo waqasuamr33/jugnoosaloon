@@ -17,6 +17,7 @@ interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialService?: string;
+  initialServices?: number[];
 }
 
 const FALLBACK_SERVICES: ServiceItem[] = [
@@ -76,6 +77,7 @@ export default function BookingModal({
   isOpen,
   onClose,
   initialService = "",
+  initialServices = [],
 }: BookingModalProps) {
   const { customer, isAuthenticated, openAuthModal } = useAuth();
 
@@ -133,7 +135,9 @@ export default function BookingModal({
         if (servicesData && servicesData.length > 0) {
           setLiveServices(servicesData);
 
-          if (initialService) {
+          if (initialServices && initialServices.length > 0) {
+            setSelectedServices(initialServices);
+          } else if (initialService) {
             const matched = servicesData.find(
               (s) =>
                 s.title.toLowerCase() === initialService.toLowerCase() ||
@@ -159,7 +163,14 @@ export default function BookingModal({
     if (isOpen) {
       loadInitialData();
     }
-  }, [isOpen, initialService]);
+  }, [isOpen, initialService, initialServices]);
+
+  // Keep selectedServices updated when modal opens with initialServices
+  useEffect(() => {
+    if (isOpen && initialServices && initialServices.length > 0) {
+      setSelectedServices(initialServices);
+    }
+  }, [isOpen, initialServices]);
 
   if (!isOpen) return null;
 
