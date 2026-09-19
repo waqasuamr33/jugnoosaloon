@@ -36,9 +36,9 @@ export default function WorkShowcase({ onOpenBooking }: WorkShowcaseProps = {}) 
 
   return (
     <section className="py-24 bg-[#FAFAFA] text-[#111111] relative overflow-hidden border-t border-slate-200">
-      <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 sm:mb-14 gap-6">
           <div className="space-y-3 max-w-2xl">
             <h2 className="font-sans text-3xl sm:text-5xl font-extrabold uppercase tracking-tight text-[#111111]">
               OUR WORK & TRANSFORMATIONS
@@ -62,31 +62,31 @@ export default function WorkShowcase({ onOpenBooking }: WorkShowcaseProps = {}) 
 
         {/* True Pinterest Masonry Showcase (Preserves Natural Aspect Ratios) */}
         {loading ? (
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-6">
-            {[320, 440, 280, 400, 350, 300].map((h, idx) => (
+          <div className="columns-2 sm:columns-2 lg:columns-3 gap-3 sm:gap-6">
+            {[260, 360, 220, 320, 280, 240].map((h, idx) => (
               <div
                 key={idx}
                 style={{ height: `${h}px` }}
-                className="break-inside-avoid mb-6 rounded-2xl sm:rounded-3xl bg-slate-200 border border-slate-300 animate-pulse"
+                className="break-inside-avoid mb-3 sm:mb-6 rounded-xl sm:rounded-3xl bg-slate-200 border border-slate-300 animate-pulse"
               />
             ))}
           </div>
         ) : (
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 [column-fill:_balance]">
+          <div className="columns-2 sm:columns-2 lg:columns-3 gap-3 sm:gap-6 [column-fill:_balance]">
             {items.map((item, idx) => {
               const imageSrc = normalizeImageUrl(item.image_url, item.image_path);
 
               return (
                 <div
                   key={item.id || idx}
-                  className="break-inside-avoid mb-6 group relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm hover:shadow-2xl border border-slate-200/80 hover:border-[#D4AF37] transition-all duration-300 cursor-pointer"
+                  className="break-inside-avoid mb-3 sm:mb-6 group relative w-full rounded-xl sm:rounded-3xl overflow-hidden bg-white shadow-sm hover:shadow-2xl border border-slate-200/80 hover:border-[#D4AF37] transition-all duration-300 cursor-pointer"
                 >
                   {/* Protected Image: Clean display on screen, downloads Jugnu's Saloon logo */}
                   <ProtectedImage
                     src={imageSrc}
                     alt={item.title || "Saloon Transformation"}
                     onClick={() => setLightboxImage(imageSrc)}
-                    imgClassName="w-full h-auto block object-contain sm:object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                    imgClassName="w-full h-auto block object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                   />
                 </div>
               );

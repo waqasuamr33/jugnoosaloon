@@ -1,8 +1,21 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Vivaldi";
+  src: url("/fonts/Vivaldi.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-vivaldi: "Vivaldi", "Vivaldi Italic", cursive, serif;
+}
+
 :root {
   --font-helvetica: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-georgia: "Playfair Display", Georgia, serif;
+  --font-vivaldi: "Vivaldi", "Vivaldi Italic", cursive, serif;
   
   --bg-primary: #FAFAFA;
   --bg-surface: #FFFFFF;
@@ -32,6 +45,11 @@ body {
 .font-georgia {
   font-family: var(--font-georgia);
   font-size: 1.08em;
+}
+
+/* Vivaldi luxury script font utility */
+.font-vivaldi {
+  font-family: var(--font-vivaldi), "Vivaldi", "Vivaldi Italic", cursive, serif !important;
 }
 
 h1, h2, h3, h4, h5, h6 {

@@ -39,31 +39,25 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-white/95 backdrop-blur-md py-3 border-b border-slate-200 shadow-sm"
-          : "bg-white py-4 border-b border-slate-100"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+        ? "bg-white/95 backdrop-blur-md py-3 border-b border-slate-200 shadow-sm"
+        : "bg-white py-4 border-b border-slate-100"
+        }`}
     >
-      <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center space-x-3 group">
+        <Link href="/" className="flex items-center space-x-2 sm:space-x-3 group min-w-0 flex-shrink-0">
           <Image
             src="/logo.png"
             alt="Jugnu's Saloon Logo"
-            width={52}
-            height={52}
-            className="w-12 h-12 sm:w-13 sm:h-13 object-contain group-hover:scale-105 transition-transform"
+            width={48}
+            height={48}
+            className="w-10 h-10 sm:w-12 sm:h-12 md:w-13 md:h-13 object-contain group-hover:scale-105 transition-transform flex-shrink-0"
             priority
           />
-          <div className="flex flex-col">
-            <span className="font-sans text-lg sm:text-xl font-bold tracking-tight text-[#111111] group-hover:text-[#D4AF37] transition-colors">
-              JUGNU&apos;S
-            </span>
-            <span className="text-[9px] tracking-[0.25em] text-[#996515] uppercase font-bold">
-              SALOON
-            </span>
-          </div>
+          <span className="font-vivaldi text-[20px] xs:text-[18px] sm:text-2xl md:text-3xl tracking-normal text-[#111111] group-hover:text-[#D4AF37] transition-colors whitespace-nowrap">
+            Jugnu&apos;s Saloon
+          </span>
         </Link>
 
         {/* Desktop Navigation Links */}
@@ -74,11 +68,10 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
               <Link
                 key={link.name}
                 href={link.href}
-                className={`transition-colors py-1 relative ${
-                  isActive
-                    ? "text-[#996515] font-bold after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[#D4AF37]"
-                    : "hover:text-[#D4AF37] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[#D4AF37] hover:after:w-full after:transition-all after:duration-300"
-                }`}
+                className={`transition-colors py-1 relative ${isActive
+                  ? "text-[#996515] font-bold after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[#D4AF37]"
+                  : "hover:text-[#D4AF37] after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[#D4AF37] hover:after:w-full after:transition-all after:duration-300"
+                  }`}
               >
                 {link.name}
               </Link>
@@ -196,13 +189,13 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
           )}
         </div>
 
-        {/* Mobile Menu Toggle */}
-        <div className="flex md:hidden items-center space-x-2">
+        {/* Mobile Menu Toggle & Action CTAs */}
+        <div className="flex md:hidden items-center space-x-2 flex-shrink-0">
           {/* Mobile Cart Icon */}
           <button
             type="button"
             onClick={openCart}
-            className="relative p-2 rounded-full text-slate-800 hover:text-[#D4AF37] border border-slate-200"
+            className="relative p-2 rounded-full text-slate-800 hover:text-[#D4AF37] border border-slate-200 cursor-pointer"
             aria-label="View Shopping Cart"
           >
             <svg className="w-4 h-4 text-[#111111]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -215,34 +208,27 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
             )}
           </button>
 
-          {!isAuthenticated && (
-            <button
-              onClick={() => openAuthModal("Sign in to book")}
-              className="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase text-[#111111] border border-slate-300"
-            >
-              Sign In
-            </button>
-          )}
-
+          {/* Book CTA on mobile */}
           {onOpenBooking ? (
             <button
               onClick={() => onOpenBooking()}
-              className="sm:hidden px-3.5 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider text-white bg-[#111111]"
+              className="px-3.5 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider text-white bg-[#111111] hover:bg-[#D4AF37] hover:text-black transition-all shadow-sm active:scale-95 cursor-pointer"
             >
               Book
             </button>
           ) : (
             <Link
               href="/booking"
-              className="sm:hidden px-3.5 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider text-white bg-[#111111]"
+              className="px-3.5 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider text-white bg-[#111111] hover:bg-[#D4AF37] hover:text-black transition-all shadow-sm active:scale-95 text-center"
             >
               Book
             </Link>
           )}
 
+          {/* Hamburger Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 text-slate-800 hover:text-[#D4AF37] focus:outline-none"
+            className="p-1.5 text-slate-800 hover:text-[#D4AF37] focus:outline-none cursor-pointer"
             aria-label="Toggle Navigation Menu"
           >
             <svg
@@ -274,7 +260,24 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-5 space-y-2 shadow-lg">
-          {isAuthenticated && customer && (
+          {!isAuthenticated ? (
+            <div className="p-3 mb-2 rounded-2xl bg-[#F8F8F6] border border-slate-200 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-[#111111]">VIP Salon Perks</p>
+                <p className="text-[10px] text-slate-500">Sign in to manage bookings</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  openAuthModal("Sign in to manage bookings and VIP salon perks");
+                }}
+                className="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-[#111111] border border-[#D4AF37] bg-white hover:bg-[#FAFAFA] cursor-pointer"
+              >
+                Sign In
+              </button>
+            </div>
+          ) : customer && (
             <div className="p-3 mb-2 rounded-2xl bg-[#F8F8F6] border border-slate-200 flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold text-[#111111]">{customer.name}</p>
@@ -286,7 +289,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
                   logout();
                   setMobileMenuOpen(false);
                 }}
-                className="text-xs font-bold text-red-600 uppercase"
+                className="text-xs font-bold text-red-600 uppercase cursor-pointer"
               >
                 Log Out
               </button>

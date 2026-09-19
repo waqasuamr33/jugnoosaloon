@@ -88,9 +88,9 @@ export default function OurWorkPage() {
 
       {/* Main Showcase Section */}
       <section className="py-14 bg-[#FAFAFA]">
-        <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-8">
           {/* Category Filter Pills */}
-          <div className="flex items-center justify-center gap-2 overflow-x-auto pb-8 scrollbar-none">
+          <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-6 sm:pb-8 scrollbar-none px-1 sm:px-0">
             {categories.map((cat) => {
               const isActive = activeCategory.toLowerCase() === cat.toLowerCase();
               return (
@@ -98,7 +98,7 @@ export default function OurWorkPage() {
                   key={cat}
                   type="button"
                   onClick={() => setActiveCategory(cat)}
-                  className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer ${
                     isActive
                       ? "bg-[#111111] text-white shadow-md border border-[#111111]"
                       : "bg-white text-slate-700 border border-slate-200 hover:border-[#D4AF37] hover:text-black shadow-sm"
@@ -112,12 +112,12 @@ export default function OurWorkPage() {
 
           {/* True Pinterest Masonry Grid (Preserves Natural Aspect Ratios) */}
           {loading ? (
-            <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6">
+            <div className="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-3 sm:gap-6">
               {[280, 420, 320, 480, 360, 260, 400, 340].map((h, n) => (
                 <div
                   key={n}
                   style={{ height: `${h}px` }}
-                  className="break-inside-avoid mb-6 rounded-2xl sm:rounded-3xl bg-slate-200 border border-slate-300 animate-pulse"
+                  className="break-inside-avoid mb-3 sm:mb-6 rounded-xl sm:rounded-3xl bg-slate-200 border border-slate-300 animate-pulse"
                 />
               ))}
             </div>
@@ -135,21 +135,21 @@ export default function OurWorkPage() {
               </button>
             </div>
           ) : (
-            <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 [column-fill:_balance]">
+            <div className="columns-2 sm:columns-2 md:columns-3 lg:columns-4 gap-3 sm:gap-6 [column-fill:_balance]">
               {filteredItems.map((item, idx) => {
                 const imageSrc = normalizeImageUrl(item.image_url, item.image_path);
 
                 return (
                   <div
                     key={item.id || idx}
-                    className="break-inside-avoid mb-6 group relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm hover:shadow-2xl border border-slate-200/80 hover:border-[#D4AF37] transition-all duration-300 cursor-pointer"
+                    className="break-inside-avoid mb-3 sm:mb-6 group relative w-full rounded-xl sm:rounded-3xl overflow-hidden bg-white shadow-sm hover:shadow-2xl border border-slate-200/80 hover:border-[#D4AF37] transition-all duration-300 cursor-pointer"
                   >
                     {/* Protected Image: Displays clean, downloads Jugnu's Saloon logo */}
                     <ProtectedImage
                       src={imageSrc}
                       alt={item.title || "Jugnu's Saloon Transformation"}
                       onClick={() => setLightboxImage(imageSrc)}
-                      imgClassName="w-full h-auto block object-contain sm:object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                      imgClassName="w-full h-auto block object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                     />
                   </div>
                 );

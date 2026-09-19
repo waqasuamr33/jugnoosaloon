@@ -39,8 +39,8 @@ export default function Footer({ onOpenBooking }: FooterProps) {
               />
             </div>
             <div>
-              <h3 className="font-sans text-2xl font-bold text-white tracking-wider">
-                JUGNU&apos;S SALOON
+              <h3 className="font-vivaldi text-3xl sm:text-4xl font-normal text-white tracking-wide">
+                Jugnu&apos;s Saloon
               </h3>
               <p className="text-xs uppercase tracking-[0.25em] text-[#D4AF37] font-semibold">
                 EXQUISITE BEAUTY & BRIDAL ARTISTRY
