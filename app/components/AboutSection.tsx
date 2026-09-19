@@ -13,24 +13,24 @@ export default function AboutSection({ onOpenBooking }: AboutSectionProps) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Asymmetrical Images */}
           <div className="lg:col-span-6 relative">
-            <div className="grid grid-cols-2 gap-4 sm:gap-6 relative">
-              <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-xl mt-6">
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 relative items-start">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-xl mt-6 h-64 sm:h-80">
                 <Image
                   src="/images/hair_styling.png"
                   alt="Precision Styling at Jugnu's Saloon"
                   width={400}
                   height={500}
-                  className="w-full h-64 sm:h-80 object-cover hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                 />
               </div>
 
-              <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-xl -mt-6 bg-slate-100">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-xl -mt-6 h-64 sm:h-80">
                 <Image
                   src="/images/about-1.jpeg"
                   alt="Jugnu's Saloon Treatment"
                   width={400}
                   height={500}
-                  className="w-full h-64 sm:h-80 object-cover hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                 />
               </div>
 
