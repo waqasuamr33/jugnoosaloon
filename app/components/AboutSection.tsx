@@ -3,7 +3,7 @@
 import Image from "next/image";
 
 interface AboutSectionProps {
-  onOpenBooking: () => void;
+  onOpenBooking?: () => void;
 }
 
 export default function AboutSection({ onOpenBooking }: AboutSectionProps) {
@@ -35,11 +35,14 @@ export default function AboutSection({ onOpenBooking }: AboutSectionProps) {
               </div>
 
               {/* Gold Emblem Crest Badge */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-white border-2 border-[#D4AF37] shadow-xl flex flex-col items-center justify-center text-center z-20">
-                <span className="font-bold text-sm text-[#111111]">JS</span>
-                <span className="text-[8px] font-bold text-[#996515] uppercase tracking-widest">
-                  EST. 2018
-                </span>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white border-2 border-[#D4AF37] shadow-xl flex items-center justify-center p-2 z-20">
+                <Image
+                  src="/logo.png"
+                  alt="Jugnu's Saloon Logo"
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-contain"
+                />
               </div>
             </div>
           </div>
@@ -73,16 +76,6 @@ export default function AboutSection({ onOpenBooking }: AboutSectionProps) {
                   <span>{item}</span>
                 </div>
               ))}
-            </div>
-
-            {/* Pill CTA Button */}
-            <div className="pt-3">
-              <button
-                onClick={onOpenBooking}
-                className="px-8 py-3.5 rounded-full bg-[#111111] hover:bg-[#D4AF37] text-white hover:text-black font-bold text-xs uppercase tracking-widest transition-all shadow-md cursor-pointer"
-              >
-                More About Us
-              </button>
             </div>
           </div>
         </div>
