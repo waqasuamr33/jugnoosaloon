@@ -24,10 +24,10 @@ export default function AboutSection({ onOpenBooking }: AboutSectionProps) {
                 />
               </div>
 
-              <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-xl -mt-6">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-xl -mt-6 bg-slate-100">
                 <Image
-                  src="/images/beauty_facial.png"
-                  alt="24K Gold Facial Treatment"
+                  src="/images/about-1.jpeg"
+                  alt="Jugnu's Saloon Treatment"
                   width={400}
                   height={500}
                   className="w-full h-64 sm:h-80 object-cover hover:scale-105 transition-transform duration-500"
