@@ -93,6 +93,7 @@ export default function Hero({ onOpenBooking }: HeroProps) {
             src={s.image}
             alt={s.alt}
             fill
+            sizes="100vw"
             priority={index === 0}
             className={`object-cover ${s.mobileImage ? "hidden sm:block" : ""}`}
             style={{ objectPosition: s.objectPosition || "center center" }}
@@ -104,6 +105,7 @@ export default function Hero({ onOpenBooking }: HeroProps) {
               src={s.mobileImage}
               alt={s.alt}
               fill
+              sizes="100vw"
               priority={index === 0}
               className="object-cover block sm:hidden"
               style={{ objectPosition: s.mobileObjectPosition || "center center" }}

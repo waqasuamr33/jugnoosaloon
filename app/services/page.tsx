@@ -32,6 +32,16 @@ export default function ServicesPage() {
   // Multi-service selection for booking
   const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
 
+  // Track expanded descriptions per service card
+  const [expandedDescIds, setExpandedDescIds] = useState<Record<number, boolean>>({});
+
+  const toggleExpandDesc = (serviceId: number) => {
+    setExpandedDescIds((prev) => ({
+      ...prev,
+      [serviceId]: !prev[serviceId],
+    }));
+  };
+
   // Booking modal controls
   const [bookingOpen, setBookingOpen] = useState<boolean>(false);
   const [selectedSingleService, setSelectedSingleService] = useState<string>("");
@@ -336,6 +346,12 @@ export default function ServicesPage() {
                 const rawImg = service.image_url ? normalizeImageUrl(service.image_url) : null;
                 const imageSrc =
                   rawImg && !failedImages[service.id] ? rawImg : fallbackImg;
+                const isDescExpanded = Boolean(expandedDescIds[service.id]);
+                const descText =
+                  service.description && service.description.trim().length > 0
+                    ? service.description
+                    : "Luxury salon treatment tailored by Jugnu's senior beauticians.";
+                const isLongDesc = descText.length > 70 || descText.includes("\n");
 
                 return (
                   <div
@@ -418,10 +434,31 @@ export default function ServicesPage() {
                         {service.title}
                       </h3>
 
-                      {/* Description */}
-                      <p className="text-xs text-slate-500 font-normal line-clamp-2 leading-relaxed mb-4">
-                        {service.description || "Luxury salon treatment tailored by Jugnu's senior beauticians."}
-                      </p>
+                      {/* Description with Read More / Read Less */}
+                      <div className="mb-4">
+                        <p
+                          className={`text-xs font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
+                            isDescExpanded ? "text-slate-700" : "text-slate-500 line-clamp-2"
+                          }`}
+                        >
+                          {descText}
+                        </p>
+                        {isLongDesc && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpandDesc(service.id);
+                            }}
+                            className="mt-1.5 text-[11px] font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none"
+                          >
+                            <span>{isDescExpanded ? "Read Less" : "Read More"}</span>
+                            <span className="text-[8px] leading-none transition-transform duration-200">
+                              {isDescExpanded ? "▲" : "▼"}
+                            </span>
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div className="pt-4 border-t border-slate-100 mt-2 space-y-3.5">
