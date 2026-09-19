@@ -196,10 +196,10 @@ export default function ServicesPage() {
       />
 
       {/* Main Content & Services Catalog */}
-      <section className="py-20 bg-[#FFFFFF]">
+      <section className="py-8 sm:py-20 bg-[#FFFFFF]">
         <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8">
           {/* Search & Counter Toolbar (matching Products Page) */}
-          <div className="mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 p-6 rounded-3xl bg-[#F8F8F6] border border-slate-200 shadow-sm">
+          <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#F8F8F6] border border-slate-200 shadow-sm">
             <div className="w-full sm:w-96">
               <label className="block text-xs uppercase font-bold text-slate-700 mb-1">
                 Search Treatments
@@ -290,19 +290,40 @@ export default function ServicesPage() {
 
           {/* Skeleton Loading State or Services Cards Grid */}
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-pulse">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div
-                  key={i}
-                  className="bg-white rounded-3xl border border-slate-200 p-6 space-y-4 shadow-sm"
-                >
-                  <div className="w-full h-64 rounded-2xl bg-slate-100" />
-                  <div className="h-5 w-3/4 bg-slate-200 rounded" />
-                  <div className="h-4 w-1/2 bg-slate-100 rounded" />
-                  <div className="h-12 w-full bg-slate-200 rounded-xl pt-4" />
-                </div>
-              ))}
-            </div>
+            <>
+              {/* Mobile Skeleton: List layout (4 items) */}
+              <div className="sm:hidden flex flex-col gap-3 animate-pulse">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={`mob-skel-${i}`}
+                    className="bg-white rounded-2xl border border-slate-200 p-3.5 flex items-center justify-between gap-3 shadow-xs"
+                  >
+                    <div className="flex-1 space-y-2 py-1">
+                      <div className="h-3 w-16 bg-slate-100 rounded" />
+                      <div className="h-4 w-3/4 bg-slate-200 rounded" />
+                      <div className="h-3 w-1/2 bg-slate-100 rounded" />
+                      <div className="h-4 w-20 bg-slate-200 rounded pt-1" />
+                    </div>
+                    <div className="w-22 h-22 rounded-2xl bg-slate-100 shrink-0" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Skeleton: Grid layout */}
+              <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-pulse">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <div
+                    key={`desk-skel-${i}`}
+                    className="bg-white rounded-3xl border border-slate-200 p-6 space-y-4 shadow-sm"
+                  >
+                    <div className="w-full h-64 rounded-2xl bg-slate-100" />
+                    <div className="h-5 w-3/4 bg-slate-200 rounded" />
+                    <div className="h-4 w-1/2 bg-slate-100 rounded" />
+                    <div className="h-12 w-full bg-slate-200 rounded-xl pt-4" />
+                  </div>
+                ))}
+              </div>
+            </>
           ) : filteredServices.length === 0 ? (
             <div className="py-20 text-center space-y-4">
               <div className="w-16 h-16 mx-auto rounded-full bg-[#F8F8F6] border border-slate-200 flex items-center justify-center text-2xl text-[#996515]">
@@ -327,222 +348,343 @@ export default function ServicesPage() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {filteredServices.map((service, idx) => {
-                const isSelected = selectedServiceIds.includes(service.id);
-                const hasDiscount = Boolean(
-                  service.discount &&
-                    service.discount > 0 &&
-                    service.discounted_price &&
-                    service.discounted_price < service.price
-                );
-                const displayPrice = hasDiscount
-                  ? service.discounted_price
-                  : service.price;
+            <>
+              {/* ── MOBILE VIEW: Sleek Luxury List Layout (~4 cards visible at once, matching reference) ── */}
+              <div className="sm:hidden flex flex-col gap-3">
+                {filteredServices.map((service, idx) => {
+                  const isSelected = selectedServiceIds.includes(service.id);
+                  const hasDiscount = Boolean(
+                    service.discount &&
+                      service.discount > 0 &&
+                      service.discounted_price &&
+                      service.discounted_price < service.price
+                  );
+                  const displayPrice = hasDiscount
+                    ? service.discounted_price
+                    : service.price;
 
-                // Image fallback resolution
-                const fallbackImg =
-                  SALON_FALLBACK_IMAGES[idx % SALON_FALLBACK_IMAGES.length];
-                const rawImg = service.image_url ? normalizeImageUrl(service.image_url) : null;
-                const imageSrc =
-                  rawImg && !failedImages[service.id] ? rawImg : fallbackImg;
-                const isDescExpanded = Boolean(expandedDescIds[service.id]);
-                const descText =
-                  service.description && service.description.trim().length > 0
-                    ? service.description
-                    : "Luxury salon treatment tailored by Jugnu's senior beauticians.";
-                const isLongDesc = descText.length > 70 || descText.includes("\n");
+                  const fallbackImg =
+                    SALON_FALLBACK_IMAGES[idx % SALON_FALLBACK_IMAGES.length];
+                  const rawImg = service.image_url ? normalizeImageUrl(service.image_url) : null;
+                  const imageSrc =
+                    rawImg && !failedImages[service.id] ? rawImg : fallbackImg;
 
-                return (
-                  <div
-                    key={service.id}
-                    className={`bg-white rounded-3xl border p-6 flex flex-col justify-between shadow-sm transition-all duration-300 relative group cursor-pointer ${
-                      isSelected
-                        ? "border-[#D4AF37] ring-2 ring-[#D4AF37]/60 shadow-[0_12px_32px_rgba(212,175,55,0.22)] bg-[#FAF8F2]/30"
-                        : "border-slate-200 hover:shadow-xl hover:border-[#D4AF37]"
-                    }`}
-                    onClick={() => toggleServiceSelection(service.id)}
-                  >
-                    <div>
-                      {/* Image Frame */}
-                      <div className="relative w-full h-64 rounded-2xl overflow-hidden bg-[#F8F8F6] mb-6 flex items-center justify-center">
-                        <Image
-                          src={imageSrc}
-                          alt={service.title}
-                          fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                          onError={() => {
-                            setFailedImages((prev) => ({ ...prev, [service.id]: true }));
-                          }}
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
+                  const descText =
+                    service.description && service.description.trim().length > 0
+                      ? service.description
+                      : "Luxury salon treatment tailored by Jugnu's senior beauticians.";
 
-                        {/* Top Gradient Shadow for Badge Contrast */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/30 pointer-events-none" />
-
-                        {/* Discount Badge */}
-                        {hasDiscount && (
-                          <div className="absolute top-3 left-3 bg-[#111111] text-[#D4AF37] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-[#D4AF37]/40 shadow-sm z-10">
-                            {service.discount}% OFF
-                          </div>
-                        )}
-
-                        {/* Multi-Select Toggle Checkbox (Top-Right of Image) */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleServiceSelection(service.id);
-                          }}
-                          className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer shadow-md ${
-                            isSelected
-                              ? "bg-[#D4AF37] text-black border-2 border-white scale-105"
-                              : "bg-white/85 text-slate-700 hover:bg-white border border-slate-300 hover:border-[#D4AF37]"
-                          }`}
-                          aria-label={isSelected ? "Deselect treatment" : "Select treatment"}
-                          title={isSelected ? "Remove from selected package" : "Add to booking package"}
-                        >
-                          {isSelected ? (
-                            <svg className="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          ) : (
-                            <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                            </svg>
+                  return (
+                    <div
+                      key={`mobile-${service.id}`}
+                      className={`bg-white rounded-2xl border p-3.5 flex items-center justify-between gap-3 shadow-xs transition-all duration-200 relative group cursor-pointer ${
+                        isSelected
+                          ? "border-[#D4AF37] ring-1.5 ring-[#D4AF37]/70 shadow-[0_4px_16px_rgba(212,175,55,0.18)] bg-[#FAF8F2]/40"
+                          : "border-slate-200/90 hover:border-[#D4AF37]/50 active:scale-[0.99]"
+                      }`}
+                      onClick={() => toggleServiceSelection(service.id)}
+                    >
+                      {/* Left Column: Details & Pricing */}
+                      <div className="flex-1 min-w-0 pr-1 flex flex-col justify-between self-stretch py-0.5">
+                        <div>
+                          {/* Category Pill */}
+                          {service.category?.title && (
+                            <div className="mb-1">
+                              <span className="text-[9px] font-extrabold uppercase tracking-[0.15em] text-[#996515] bg-[#D4AF37]/10 px-2 py-0.5 rounded-md border border-[#D4AF37]/20 inline-block">
+                                {service.category.title}
+                              </span>
+                            </div>
                           )}
-                        </button>
 
-                        {/* Selected overlay pill at bottom of image if chosen */}
-                        {isSelected && (
-                          <div className="absolute bottom-3 left-3 right-3 bg-[#111111]/90 backdrop-blur-xs text-[#D4AF37] text-[10px] font-bold uppercase tracking-wider py-1 px-3 rounded-xl text-center border border-[#D4AF37]/50 shadow-sm z-10 flex items-center justify-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" />
-                            <span>Included in Booking</span>
-                          </div>
-                        )}
-                      </div>
+                          {/* Service Title */}
+                          <h3 className="font-sans font-bold text-sm text-[#111111] leading-snug line-clamp-2 mb-1 group-hover:text-[#996515] transition-colors">
+                            {service.title}
+                          </h3>
 
-                      {/* Category Tag */}
-                      <div className="mb-2">
-                        <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#996515] bg-[#D4AF37]/10 px-2.5 py-0.5 rounded-full border border-[#D4AF37]/25 inline-block">
-                          {service.category?.title || "Signature Treatment"}
-                        </span>
-                      </div>
+                          {/* Brief description snippet */}
+                          <p className="text-[11px] text-slate-500 font-normal leading-tight line-clamp-1 mb-2">
+                            {descText}
+                          </p>
+                        </div>
 
-                      {/* Service Title */}
-                      <h3 className="font-sans font-bold text-lg text-[#111111] line-clamp-2 mb-2 group-hover:text-[#996515] transition-colors">
-                        {service.title}
-                      </h3>
-
-                      {/* Description with Read More / Read Less */}
-                      <div className="mb-4">
-                        <p
-                          className={`text-xs font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
-                            isDescExpanded ? "text-slate-700" : "text-slate-500 line-clamp-2"
-                          }`}
-                        >
-                          {descText}
-                        </p>
-                        {isLongDesc && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleExpandDesc(service.id);
-                            }}
-                            className="mt-1.5 text-[11px] font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none"
-                          >
-                            <span>{isDescExpanded ? "Read Less" : "Read More"}</span>
-                            <span className="text-[8px] leading-none transition-transform duration-200">
-                              {isDescExpanded ? "▲" : "▼"}
+                        {/* Price & Book Solo Action */}
+                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100/80">
+                          <div className="flex items-baseline gap-1.5 flex-wrap">
+                            {hasDiscount && (
+                              <span className="font-sans text-[11px] text-slate-400 line-through">
+                                Rs. {service.price.toLocaleString()}
+                              </span>
+                            )}
+                            <span className="font-sans text-sm sm:text-base font-extrabold text-[#111111]">
+                              Rs. {displayPrice?.toLocaleString()}
                             </span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                          </div>
 
-                    <div className="pt-4 border-t border-slate-100 mt-2 space-y-3.5">
-                      {/* Pricing */}
-                      <div className="flex items-baseline space-x-3">
-                        <span className="font-sans text-2xl font-extrabold text-[#111111]">
-                          Rs. {displayPrice?.toLocaleString()}
-                        </span>
-                        {hasDiscount && (
-                          <span className="font-sans text-sm text-slate-400 line-through">
-                            Rs. {service.price.toLocaleString()}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Primary Action: Toggle Selection / Book */}
-                      <div className="space-y-2">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleServiceSelection(service.id);
-                          }}
-                          className={`w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md flex items-center justify-center space-x-2 ${
-                            isSelected
-                              ? "bg-[#D4AF37] text-black hover:bg-[#c29d2b] shadow-[0_4px_14px_rgba(212,175,55,0.4)]"
-                              : "bg-[#111111] text-white hover:bg-[#D4AF37] hover:text-black"
-                          }`}
-                        >
-                          {isSelected ? (
-                            <>
-                              <svg className="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
-                              <span>Selected for Booking</span>
-                            </>
-                          ) : (
-                            <>
-                              <svg className="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                              </svg>
-                              <span>Add to Booking</span>
-                            </>
-                          )}
-                        </button>
-
-                        {/* Secondary Actions: Quick Book Solo & Direct WhatsApp */}
-                        <div className="grid grid-cols-2 gap-2 pt-1">
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleBookSingle(service);
                             }}
-                            className="py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[#111111] font-bold text-[10px] uppercase tracking-wider hover:bg-[#111111] hover:text-white transition-all cursor-pointer text-center"
+                            className="text-[10px] font-extrabold uppercase tracking-wider text-[#111111] bg-slate-100 hover:bg-[#111111] hover:text-white px-2.5 py-1 rounded-lg transition-all cursor-pointer border border-slate-200 shrink-0"
                           >
                             Book Solo
                           </button>
+                        </div>
+                      </div>
 
-                          <a
-                            href={`https://wa.me/923194415757?text=${encodeURIComponent(
-                              `Hello Jugnu's Saloon, I would like to inquire about this service: *${service.title}* (Category: ${
-                                service.category?.title || "Signature"
-                              }, Price: Rs. ${displayPrice?.toLocaleString()}). Link: ${
-                                typeof window !== "undefined" ? window.location.href : "https://software.jugnussaloon.com/services"
-                              }`
-                            )}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-[10px] uppercase tracking-wider hover:border-[#25D366] hover:text-[#25D366] hover:bg-[#25D366]/5 transition-all cursor-pointer flex items-center justify-center space-x-1"
-                          >
-                            <svg className="w-3 h-3 fill-current text-[#25D366]" viewBox="0 0 24 24">
-                              <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984 0 1.763.459 3.483 1.332 5.001L2 22l5.127-1.341a9.946 9.946 0 004.882 1.28h.003c5.505 0 9.988-4.478 9.989-9.984 0-2.668-1.037-5.176-2.922-7.062A9.92 9.92 0 0012.012 2zm5.74 14.184c-.244.688-1.42 1.314-1.96 1.396-.505.076-1.162.107-1.874-.12-.435-.138-1.002-.324-1.74-.645-3.096-1.348-5.115-4.492-5.27-4.698-.153-.205-1.258-1.674-1.258-3.192 0-1.517.794-2.264 1.077-2.553.282-.288.614-.36.819-.36.205 0 .41.002.589.011.19.01.442-.072.693.53.256.615.872 2.128.948 2.282.077.153.128.333.026.538-.103.205-.154.333-.308.512-.154.18-.323.402-.461.54-.154.153-.314.321-.135.628.18.307.798 1.316 1.713 2.13 1.177 1.047 2.167 1.371 2.474 1.525.307.153.487.128.667-.077.179-.205.768-.897.973-1.205.205-.307.41-.256.692-.153.282.102 1.794.846 2.102 1.001.307.153.512.23.589.36.077.128.077.742-.167 1.43z"/>
+                      {/* Right Column: Square Image + Discount Badge + Floating Plus/Check Button */}
+                      <div className="relative shrink-0 w-22 h-22 sm:w-24 sm:h-24">
+                        <div className="relative w-full h-full rounded-2xl overflow-hidden bg-[#F8F8F6] border border-slate-200/80 shadow-xs">
+                          <Image
+                            src={imageSrc}
+                            alt={service.title}
+                            fill
+                            sizes="96px"
+                            onError={() => {
+                              setFailedImages((prev) => ({ ...prev, [service.id]: true }));
+                            }}
+                            className="object-cover"
+                          />
+
+                          {/* Discount Badge */}
+                          {hasDiscount && (
+                            <div className="absolute top-1.5 left-1.5 bg-[#111111] text-[#D4AF37] text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md border border-[#D4AF37]/50 shadow-xs z-10">
+                              {service.discount}% OFF
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Floating Action Button (+ or checkmark) at bottom-right corner */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleServiceSelection(service.id);
+                          }}
+                          className={`absolute -bottom-1.5 -right-1.5 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer shadow-md border-2 border-white ${
+                            isSelected
+                              ? "bg-[#D4AF37] text-black scale-105 shadow-[0_2px_8px_rgba(212,175,55,0.45)]"
+                              : "bg-[#111111] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black hover:scale-105"
+                          }`}
+                          aria-label={isSelected ? "Remove treatment from booking" : "Add treatment to booking"}
+                          title={isSelected ? "Remove from selected package" : "Add to booking package"}
+                        >
+                          {isSelected ? (
+                            <svg className="w-3.5 h-3.5 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
-                            <span>WhatsApp</span>
-                          </a>
+                          ) : (
+                            <svg className="w-3.5 h-3.5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* ── DESKTOP VIEW: High-End Luxury Cards Grid ── */}
+              <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {filteredServices.map((service, idx) => {
+                  const isSelected = selectedServiceIds.includes(service.id);
+                  const hasDiscount = Boolean(
+                    service.discount &&
+                      service.discount > 0 &&
+                      service.discounted_price &&
+                      service.discounted_price < service.price
+                  );
+                  const displayPrice = hasDiscount
+                    ? service.discounted_price
+                    : service.price;
+
+                  // Image fallback resolution
+                  const fallbackImg =
+                    SALON_FALLBACK_IMAGES[idx % SALON_FALLBACK_IMAGES.length];
+                  const rawImg = service.image_url ? normalizeImageUrl(service.image_url) : null;
+                  const imageSrc =
+                    rawImg && !failedImages[service.id] ? rawImg : fallbackImg;
+                  const isDescExpanded = Boolean(expandedDescIds[service.id]);
+                  const descText =
+                    service.description && service.description.trim().length > 0
+                      ? service.description
+                      : "Luxury salon treatment tailored by Jugnu's senior beauticians.";
+                  const isLongDesc = descText.length > 70 || descText.includes("\n");
+
+                  return (
+                    <div
+                      key={`desktop-${service.id}`}
+                      className={`bg-white rounded-3xl border p-6 flex flex-col justify-between shadow-sm transition-all duration-300 relative group cursor-pointer ${
+                        isSelected
+                          ? "border-[#D4AF37] ring-2 ring-[#D4AF37]/60 shadow-[0_12px_32px_rgba(212,175,55,0.22)] bg-[#FAF8F2]/30"
+                          : "border-slate-200 hover:shadow-xl hover:border-[#D4AF37]"
+                      }`}
+                      onClick={() => toggleServiceSelection(service.id)}
+                    >
+                      <div>
+                        {/* Image Frame */}
+                        <div className="relative w-full h-64 rounded-2xl overflow-hidden bg-[#F8F8F6] mb-6 flex items-center justify-center">
+                          <Image
+                            src={imageSrc}
+                            alt={service.title}
+                            fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                            onError={() => {
+                              setFailedImages((prev) => ({ ...prev, [service.id]: true }));
+                            }}
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+
+                          {/* Top Gradient Shadow for Badge Contrast */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/30 pointer-events-none" />
+
+                          {/* Discount Badge */}
+                          {hasDiscount && (
+                            <div className="absolute top-3 left-3 bg-[#111111] text-[#D4AF37] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-[#D4AF37]/40 shadow-sm z-10">
+                              {service.discount}% OFF
+                            </div>
+                          )}
+
+                          {/* Multi-Select Toggle Checkbox (Top-Right of Image) */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleServiceSelection(service.id);
+                            }}
+                            className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer shadow-md ${
+                              isSelected
+                                ? "bg-[#D4AF37] text-black border-2 border-white scale-105"
+                                : "bg-white/85 text-slate-700 hover:bg-white border border-slate-300 hover:border-[#D4AF37]"
+                            }`}
+                            aria-label={isSelected ? "Deselect treatment" : "Select treatment"}
+                            title={isSelected ? "Remove from selected package" : "Add to booking package"}
+                          >
+                            {isSelected ? (
+                              <svg className="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                              </svg>
+                            )}
+                          </button>
+
+                          {/* Selected overlay pill at bottom of image if chosen */}
+                          {isSelected && (
+                            <div className="absolute bottom-3 left-3 right-3 bg-[#111111]/90 backdrop-blur-xs text-[#D4AF37] text-[10px] font-bold uppercase tracking-wider py-1 px-3 rounded-xl text-center border border-[#D4AF37]/50 shadow-sm z-10 flex items-center justify-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" />
+                              <span>Included in Booking</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Category Tag */}
+                        <div className="mb-2">
+                          <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#996515] bg-[#D4AF37]/10 px-2.5 py-0.5 rounded-full border border-[#D4AF37]/25 inline-block">
+                            {service.category?.title || "Signature Treatment"}
+                          </span>
+                        </div>
+
+                        {/* Service Title */}
+                        <h3 className="font-sans font-bold text-lg text-[#111111] line-clamp-2 mb-2 group-hover:text-[#996515] transition-colors">
+                          {service.title}
+                        </h3>
+
+                        {/* Description with Read More / Read Less */}
+                        <div className="mb-4">
+                          <p
+                            className={`text-xs font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
+                              isDescExpanded ? "text-slate-700" : "text-slate-500 line-clamp-2"
+                            }`}
+                          >
+                            {descText}
+                          </p>
+                          {isLongDesc && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleExpandDesc(service.id);
+                              }}
+                              className="mt-1.5 text-[11px] font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none"
+                            >
+                              <span>{isDescExpanded ? "Read Less" : "Read More"}</span>
+                              <span className="text-[8px] leading-none transition-transform duration-200">
+                                {isDescExpanded ? "▲" : "▼"}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-slate-100 mt-2 space-y-3.5">
+                        {/* Pricing */}
+                        <div className="flex items-baseline space-x-3">
+                          <span className="font-sans text-2xl font-extrabold text-[#111111]">
+                            Rs. {displayPrice?.toLocaleString()}
+                          </span>
+                          {hasDiscount && (
+                            <span className="font-sans text-sm text-slate-400 line-through">
+                              Rs. {service.price.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Primary Action: Toggle Selection / Book */}
+                        <div className="space-y-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleServiceSelection(service.id);
+                            }}
+                            className={`w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md flex items-center justify-center space-x-2 ${
+                              isSelected
+                                ? "bg-[#D4AF37] text-black hover:bg-[#c29d2b] shadow-[0_4px_14px_rgba(212,175,55,0.4)]"
+                                : "bg-[#111111] text-white hover:bg-[#D4AF37] hover:text-black"
+                            }`}
+                          >
+                            {isSelected ? (
+                              <>
+                                <svg className="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span>Selected for Booking</span>
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                <span>Add to Booking</span>
+                              </>
+                            )}
+                          </button>
+
+                          {/* Secondary Action: Book Solo Treatment (WhatsApp removed) */}
+                          <div className="pt-1">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleBookSingle(service);
+                              }}
+                              className="w-full py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[#111111] font-bold text-[11px] uppercase tracking-wider hover:bg-[#111111] hover:text-[#D4AF37] hover:border-[#111111] transition-all cursor-pointer text-center"
+                            >
+                              Book Single Treatment
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       </section>
