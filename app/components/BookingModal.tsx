@@ -18,6 +18,7 @@ interface BookingModalProps {
   onClose: () => void;
   initialService?: string;
   initialServices?: number[];
+  lockSelectedServices?: boolean;
 }
 
 const FALLBACK_SERVICES: ServiceItem[] = [
@@ -78,11 +79,12 @@ export default function BookingModal({
   onClose,
   initialService = "",
   initialServices = [],
+  lockSelectedServices = false,
 }: BookingModalProps) {
   const { customer, isAuthenticated, openAuthModal } = useAuth();
 
   const [step, setStep] = useState<number>(1);
-  const [selectedServices, setSelectedServices] = useState<number[]>([]);
+  const [selectedServices, setSelectedServices] = useState<number[]>(() => initialServices || []);
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -106,6 +108,14 @@ export default function BookingModal({
   const [liveCategories, setLiveCategories] = useState<ServiceCategoryItem[]>([]);
   const [expandedCategory, setExpandedCategory] = useState<number | null>(null);
   const [expandedDescId, setExpandedDescId] = useState<number | null>(null);
+
+  const isServicesPreselected = Boolean(
+    lockSelectedServices ||
+    (initialServices && initialServices.length > 0) ||
+    Boolean(initialService && initialService.trim().length > 0)
+  );
+  const effectiveSelectedServiceIds =
+    selectedServices.length > 0 ? selectedServices : (initialServices || []);
 
   // Autofill client details when customer logs in or is authenticated
   useEffect(() => {
@@ -456,7 +466,7 @@ export default function BookingModal({
                 >
                   1
                 </span>
-                <span>Service</span>
+                <span>{isServicesPreselected ? "Date & Slot" : "Service"}</span>
               </div>
               <div
                 className={`h-0.5 flex-1 mx-2 ${
@@ -510,7 +520,9 @@ export default function BookingModal({
                 <span className="text-[10px] uppercase tracking-widest text-[#996515] font-bold">
                   Step 1 of 3
                 </span>
-                <h4 className="font-sans text-lg font-bold">Select Service &amp; Date</h4>
+                <h4 className="font-sans text-lg font-bold">
+                  {isServicesPreselected ? "Select Appointment Date & Time" : "Select Service & Date"}
+                </h4>
               </div>
 
               {!isAuthenticated && (
@@ -537,397 +549,476 @@ export default function BookingModal({
                 </div>
               )}
 
-              {/* Service Selection — Category Accordion + Search */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs uppercase tracking-wider text-slate-700 font-bold">
-                    Choose Services
-                  </label>
-                  {selectedServices.length > 0 && (
-                    <span className="text-[10px] font-bold text-[#996515] uppercase tracking-wider">
-                      {selectedServices.length} selected
+              {/* Service Selection or Preselected Summary */}
+              {isServicesPreselected ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs uppercase tracking-wider text-slate-700 font-bold flex items-center gap-1.5">
+                      <span className="text-[#D4AF37]">✦</span>
+                      <span>Selected {effectiveSelectedServiceIds.length === 1 ? "Treatment" : "Treatments"}</span>
+                    </label>
+                    <span className="text-[10px] font-bold text-[#D4AF37] bg-[#111111] px-2.5 py-0.5 rounded-full border border-[#D4AF37]/30">
+                      {effectiveSelectedServiceIds.length} {effectiveSelectedServiceIds.length === 1 ? "Item" : "Items"}
                     </span>
-                  )}
-                </div>
-
-                {/* Search bar */}
-                <div className="relative mb-3">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Search services..."
-                    value={serviceSearch}
-                    onChange={(e) => setServiceSearch(e.target.value)}
-                    className="w-full pl-8 pr-8 py-2.5 rounded-xl bg-[#FAFAFA] border border-slate-200 text-[#111111] placeholder-slate-400 focus:border-[#D4AF37] focus:outline-none text-xs font-medium"
-                  />
-                  {serviceSearch && (
-                    <button
-                      type="button"
-                      onClick={() => setServiceSearch("")}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm leading-none"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-
-                {loadingServices ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="h-11 rounded-xl bg-slate-100 animate-pulse" />
-                    ))}
                   </div>
-                ) : (() => {
-                  const allServices = liveServices.length > 0 ? liveServices : FALLBACK_SERVICES;
 
-                  // --- SEARCH MODE: flat filtered list ---
-                  if (serviceSearch.trim()) {
-                    const filtered = allServices.filter((s) =>
-                      s.title.toLowerCase().includes(serviceSearch.toLowerCase())
-                    );
-                    return filtered.length === 0 ? (
-                      <div className="py-8 text-center text-slate-400 text-xs font-medium">
-                        No services found for &ldquo;{serviceSearch}&rdquo;
-                      </div>
-                    ) : (
-                      <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
-                        {filtered.map((service) => {
-                          const finalPrice = service.discounted_price || service.price;
-                          const isChecked = selectedServices.includes(service.id);
-                          const isExpanded = expandedDescId === service.id;
-                          const hasDescription = Boolean(service.description && service.description.trim().length > 0);
-                          const isLongDescription = Boolean(
-                            hasDescription && (
-                              (service.description && service.description.trim().length > 60) ||
-                              (service.description && service.description.split(/\r?\n/).filter((l) => l.trim().length > 0).length > 2)
-                            )
+                  {loadingServices && liveServices.length === 0 ? (
+                    <div className="space-y-2">
+                      <div className="h-14 rounded-2xl bg-slate-100 animate-pulse" />
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-slate-200 bg-[#FAFAFA] p-2.5 space-y-1.5 max-h-48 overflow-y-auto">
+                      {(() => {
+                        const allServices = liveServices.length > 0 ? liveServices : FALLBACK_SERVICES;
+                        const matchedServices = allServices.filter((s) => effectiveSelectedServiceIds.includes(s.id));
+
+                        if (matchedServices.length === 0 && initialService) {
+                          return (
+                            <div className="py-2.5 px-3 bg-white rounded-xl border border-slate-200/80 flex items-center justify-between">
+                              <h5 className="font-sans font-bold text-xs text-[#111111]">
+                                {initialService}
+                              </h5>
+                              <span className="text-[10px] text-slate-500 font-bold">Selected</span>
+                            </div>
                           );
+                        }
 
+                        return matchedServices.map((service) => {
+                          const finalPrice = service.discounted_price || service.price;
                           return (
                             <div
                               key={service.id}
-                              role="button"
-                              tabIndex={0}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                  e.preventDefault();
+                              className="flex items-center justify-between py-2 px-3 bg-white rounded-xl border border-slate-200/80 shadow-xs"
+                            >
+                              <div className="min-w-0 flex-1 pr-2">
+                                <h5 className="font-sans font-bold text-xs text-[#111111] truncate">
+                                  {service.title}
+                                </h5>
+                                {service.category?.title && (
+                                  <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#996515]">
+                                    {service.category.title}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-right shrink-0">
+                                <span className="font-mono text-xs font-bold text-[#111111]">
+                                  Rs. {finalPrice.toLocaleString()}
+                                </span>
+                                {Boolean(service.discount && service.discount > 0) && (
+                                  <span className="block text-[9px] text-[#996515] font-bold">
+                                    {service.discount}% OFF
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  )}
+
+                  {/* Combined Total */}
+                  <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-[#111111] text-white text-xs shadow-xs">
+                    <span className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">
+                      Package Total:
+                    </span>
+                    <span className="font-extrabold text-[#D4AF37] font-mono text-sm">
+                      {getSelectedServicesTotal()}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs uppercase tracking-wider text-slate-700 font-bold">
+                      Choose Services
+                    </label>
+                    {selectedServices.length > 0 && (
+                      <span className="text-[10px] font-bold text-[#996515] uppercase tracking-wider">
+                        {selectedServices.length} selected
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Search bar */}
+                  <div className="relative mb-3">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Search services..."
+                      value={serviceSearch}
+                      onChange={(e) => setServiceSearch(e.target.value)}
+                      className="w-full pl-8 pr-8 py-2.5 rounded-xl bg-[#FAFAFA] border border-slate-200 text-[#111111] placeholder-slate-400 focus:border-[#D4AF37] focus:outline-none text-xs font-medium"
+                    />
+                    {serviceSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setServiceSearch("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm leading-none"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {loadingServices ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-11 rounded-xl bg-slate-100 animate-pulse" />
+                      ))}
+                    </div>
+                  ) : (() => {
+                    const allServices = liveServices.length > 0 ? liveServices : FALLBACK_SERVICES;
+
+                    // --- SEARCH MODE: flat filtered list ---
+                    if (serviceSearch.trim()) {
+                      const filtered = allServices.filter((s) =>
+                        s.title.toLowerCase().includes(serviceSearch.toLowerCase())
+                      );
+                      return filtered.length === 0 ? (
+                        <div className="py-8 text-center text-slate-400 text-xs font-medium">
+                          No services found for &ldquo;{serviceSearch}&rdquo;
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+                          {filtered.map((service) => {
+                            const finalPrice = service.discounted_price || service.price;
+                            const isChecked = selectedServices.includes(service.id);
+                            const isExpanded = expandedDescId === service.id;
+                            const hasDescription = Boolean(service.description && service.description.trim().length > 0);
+                            const isLongDescription = Boolean(
+                              hasDescription && (
+                                (service.description && service.description.trim().length > 60) ||
+                                (service.description && service.description.split(/\r?\n/).filter((l) => l.trim().length > 0).length > 2)
+                              )
+                            );
+
+                            return (
+                              <div
+                                key={service.id}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    setSelectedServices((prev) =>
+                                      prev.includes(service.id)
+                                        ? prev.filter((id) => id !== service.id)
+                                        : [...prev, service.id]
+                                    );
+                                    setApiError("");
+                                  }
+                                }}
+                                onClick={() => {
                                   setSelectedServices((prev) =>
                                     prev.includes(service.id)
                                       ? prev.filter((id) => id !== service.id)
                                       : [...prev, service.id]
                                   );
                                   setApiError("");
-                                }
-                              }}
-                              onClick={() => {
-                                setSelectedServices((prev) =>
-                                  prev.includes(service.id)
-                                    ? prev.filter((id) => id !== service.id)
-                                    : [...prev, service.id]
-                                );
-                                setApiError("");
-                              }}
-                              className={`w-full flex items-start justify-between p-3 sm:px-4 sm:py-3 rounded-xl border text-left transition-all cursor-pointer ${
-                                isChecked
-                                  ? "bg-[#111111] border-[#D4AF37] text-white shadow-md"
-                                  : "bg-[#FAFAFA] border-slate-200 text-[#111111] hover:border-[#D4AF37] hover:bg-slate-50"
-                              }`}
-                            >
-                              <div className="flex items-start gap-3 min-w-0 flex-1">
-                                <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                                  isChecked ? "bg-[#D4AF37] border-[#D4AF37]" : "border-slate-300"
-                                }`}>
-                                  {isChecked && (
-                                    <svg className="w-2.5 h-2.5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                  )}
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-xs font-semibold leading-tight block">{service.title}</span>
-                                    {service.category && (
-                                      <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${
-                                        isChecked ? "bg-white/10 text-slate-300" : "bg-slate-200 text-slate-600"
-                                      }`}>
-                                        {service.category.title}
-                                      </span>
+                                }}
+                                className={`w-full flex items-start justify-between p-3 sm:px-4 sm:py-3 rounded-xl border text-left transition-all cursor-pointer ${
+                                  isChecked
+                                    ? "bg-[#111111] border-[#D4AF37] text-white shadow-md"
+                                    : "bg-[#FAFAFA] border-slate-200 text-[#111111] hover:border-[#D4AF37] hover:bg-slate-50"
+                                }`}
+                              >
+                                <div className="flex items-start gap-3 min-w-0 flex-1">
+                                  <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                                    isChecked ? "bg-[#D4AF37] border-[#D4AF37]" : "border-slate-300"
+                                  }`}>
+                                    {isChecked && (
+                                      <svg className="w-2.5 h-2.5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                      </svg>
                                     )}
-                                  </div>
-
-                                  {/* 2-line Description with Read More / Show Less */}
-                                  {hasDescription && (
-                                    <div className="mt-1">
-                                      <p
-                                        className={`text-[11px] font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
-                                          isChecked ? "text-slate-300" : "text-slate-500"
-                                        } ${
-                                          isExpanded ? "" : "line-clamp-2"
-                                        }`}
-                                        style={
-                                          !isExpanded
-                                            ? {
-                                                display: "-webkit-box",
-                                                WebkitLineClamp: 2,
-                                                WebkitBoxOrient: "vertical",
-                                                overflow: "hidden",
-                                              }
-                                            : undefined
-                                        }
-                                      >
-                                        {service.description}
-                                      </p>
-
-                                      {isLongDescription && (
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setExpandedDescId(isExpanded ? null : service.id);
-                                          }}
-                                          className={`mt-1 text-[10px] font-bold transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none ${
-                                            isChecked ? "text-[#D4AF37] hover:text-white" : "text-[#996515] hover:text-[#111111]"
-                                          }`}
-                                        >
-                                          <span>{isExpanded ? "Show Less" : "Read More"}</span>
-                                          <span className="text-[8px] leading-none transition-transform duration-200">
-                                            {isExpanded ? "▲" : "▼"}
-                                          </span>
-                                        </button>
+                                  </span>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-xs font-semibold leading-tight block">{service.title}</span>
+                                      {service.category && (
+                                        <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${
+                                          isChecked ? "bg-white/10 text-slate-300" : "bg-slate-200 text-slate-600"
+                                        }`}>
+                                          {service.category.title}
+                                        </span>
                                       )}
                                     </div>
+
+                                    {/* 2-line Description with Read More / Show Less */}
+                                    {hasDescription && (
+                                      <div className="mt-1">
+                                        <p
+                                          className={`text-[11px] font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
+                                            isChecked ? "text-slate-300" : "text-slate-500"
+                                          } ${
+                                            isExpanded ? "" : "line-clamp-2"
+                                          }`}
+                                          style={
+                                            !isExpanded
+                                              ? {
+                                                  display: "-webkit-box",
+                                                  WebkitLineClamp: 2,
+                                                  WebkitBoxOrient: "vertical",
+                                                  overflow: "hidden",
+                                                }
+                                              : undefined
+                                          }
+                                        >
+                                          {service.description}
+                                        </p>
+
+                                        {isLongDescription && (
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setExpandedDescId(isExpanded ? null : service.id);
+                                            }}
+                                            className={`mt-1 text-[10px] font-bold transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none ${
+                                              isChecked ? "text-[#D4AF37] hover:text-white" : "text-[#996515] hover:text-[#111111]"
+                                            }`}
+                                          >
+                                            <span>{isExpanded ? "Show Less" : "Read More"}</span>
+                                            <span className="text-[8px] leading-none transition-transform duration-200">
+                                              {isExpanded ? "▲" : "▼"}
+                                            </span>
+                                          </button>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="text-right shrink-0 ml-3 pt-0.5">
+                                  <span className={`text-xs font-bold font-mono ${
+                                    isChecked ? "text-[#D4AF37]" : "text-[#996515]"
+                                  }`}>
+                                    Rs. {finalPrice.toLocaleString()}
+                                  </span>
+                                  {!!service.discount && service.discount > 0 && (
+                                    <span className="block text-[9px] text-emerald-400 font-bold">{service.discount}% OFF</span>
                                   )}
                                 </div>
                               </div>
-                              <div className="text-right shrink-0 ml-3 pt-0.5">
-                                <span className={`text-xs font-bold font-mono ${
-                                  isChecked ? "text-[#D4AF37]" : "text-[#996515]"
-                                }`}>
-                                  Rs. {finalPrice.toLocaleString()}
-                                </span>
-                                {!!service.discount && service.discount > 0 && (
-                                  <span className="block text-[9px] text-emerald-400 font-bold">{service.discount}% OFF</span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  }
+                            );
+                          })}
+                        </div>
+                      );
+                    }
 
-                  // --- BROWSE MODE: category accordion ---
-                  // Build category list: live categories + an "Uncategorized" bucket
-                  const categorized = new Set(allServices.map((s) => s.category?.id).filter(Boolean));
-                  const uncategorized = allServices.filter((s) => !s.category?.id);
+                    // --- BROWSE MODE: category accordion ---
+                    // Build category list: live categories + an "Uncategorized" bucket
+                    const categorized = new Set(allServices.map((s) => s.category?.id).filter(Boolean));
+                    const uncategorized = allServices.filter((s) => !s.category?.id);
 
-                  // Ordered: live categories first, then uncategorized if any
-                  const categoryList: { id: number; title: string; services: ServiceItem[] }[] = [];
+                    // Ordered: live categories first, then uncategorized if any
+                    const categoryList: { id: number; title: string; services: ServiceItem[] }[] = [];
 
-                  if (liveCategories.length > 0) {
-                    liveCategories.forEach((cat) => {
-                      const catServices = allServices.filter((s) => s.category?.id === cat.id);
-                      if (catServices.length > 0) {
-                        categoryList.push({ id: cat.id, title: cat.title, services: catServices });
-                      }
-                    });
-                  } else {
-                    // Fallback: group by category from service data
-                    const seen = new Map<number, { id: number; title: string; services: ServiceItem[] }>();
-                    allServices.forEach((s) => {
-                      if (s.category) {
-                        if (!seen.has(s.category.id)) seen.set(s.category.id, { id: s.category.id, title: s.category.title, services: [] });
-                        seen.get(s.category.id)!.services.push(s);
-                      }
-                    });
-                    seen.forEach((v) => categoryList.push(v));
-                  }
+                    if (liveCategories.length > 0) {
+                      liveCategories.forEach((cat) => {
+                        const catServices = allServices.filter((s) => s.category?.id === cat.id);
+                        if (catServices.length > 0) {
+                          categoryList.push({ id: cat.id, title: cat.title, services: catServices });
+                        }
+                      });
+                    } else {
+                      // Fallback: group by category from service data
+                      const seen = new Map<number, { id: number; title: string; services: ServiceItem[] }>();
+                      allServices.forEach((s) => {
+                        if (s.category) {
+                          if (!seen.has(s.category.id)) seen.set(s.category.id, { id: s.category.id, title: s.category.title, services: [] });
+                          seen.get(s.category.id)!.services.push(s);
+                        }
+                      });
+                      seen.forEach((v) => categoryList.push(v));
+                    }
 
-                  if (uncategorized.length > 0) {
-                    categoryList.push({ id: -1, title: "Other Services", services: uncategorized });
-                  }
+                    if (uncategorized.length > 0) {
+                      categoryList.push({ id: -1, title: "Other Services", services: uncategorized });
+                    }
 
-                  if (categoryList.length === 0) {
-                    return <div className="py-6 text-center text-slate-400 text-xs">No services available.</div>;
-                  }
+                    if (categoryList.length === 0) {
+                      return <div className="py-6 text-center text-slate-400 text-xs">No services available.</div>;
+                    }
 
-                  return (
-                    <div className="space-y-1.5 max-h-80 overflow-y-auto pr-1">
-                      {categoryList.map((cat) => {
-                        const isOpen = expandedCategory === cat.id;
-                        const selectedInCat = cat.services.filter((s) => selectedServices.includes(s.id)).length;
-                        return (
-                          <div key={cat.id} className="rounded-xl border border-slate-200 overflow-hidden">
-                            {/* Category Header */}
-                            <button
-                              type="button"
-                              onClick={() => setExpandedCategory(isOpen ? null : cat.id)}
-                              className={`w-full flex items-center justify-between px-4 py-3 text-left transition-all cursor-pointer ${
-                                isOpen ? "bg-[#111111] text-white" : "bg-[#FAFAFA] text-[#111111] hover:bg-slate-100"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold uppercase tracking-wide">{cat.title}</span>
-                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                                  isOpen ? "bg-white/10 text-slate-300" : "bg-slate-100 text-slate-500"
-                                }`}>
-                                  {cat.services.length}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                {selectedInCat > 0 && (
-                                  <span className="text-[10px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/30 px-2 py-0.5 rounded-full">
-                                    {selectedInCat} added
+                    return (
+                      <div className="space-y-1.5 max-h-80 overflow-y-auto pr-1">
+                        {categoryList.map((cat) => {
+                          const isOpen = expandedCategory === cat.id;
+                          const selectedInCat = cat.services.filter((s) => selectedServices.includes(s.id)).length;
+                          return (
+                            <div key={cat.id} className="rounded-xl border border-slate-200 overflow-hidden">
+                              {/* Category Header */}
+                              <button
+                                type="button"
+                                onClick={() => setExpandedCategory(isOpen ? null : cat.id)}
+                                className={`w-full flex items-center justify-between px-4 py-3 text-left transition-all cursor-pointer ${
+                                  isOpen ? "bg-[#111111] text-white" : "bg-[#FAFAFA] text-[#111111] hover:bg-slate-100"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold uppercase tracking-wide">{cat.title}</span>
+                                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                                    isOpen ? "bg-white/10 text-slate-300" : "bg-slate-100 text-slate-500"
+                                  }`}>
+                                    {cat.services.length}
                                   </span>
-                                )}
-                                <svg
-                                  className={`w-4 h-4 transition-transform ${
-                                    isOpen ? "rotate-180 text-[#D4AF37]" : "text-slate-400"
-                                  }`}
-                                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                >
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                              </div>
-                            </button>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {selectedInCat > 0 && (
+                                    <span className="text-[10px] font-bold text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/30 px-2 py-0.5 rounded-full">
+                                      {selectedInCat} added
+                                    </span>
+                                  )}
+                                  <svg
+                                    className={`w-4 h-4 transition-transform ${
+                                      isOpen ? "rotate-180 text-[#D4AF37]" : "text-slate-400"
+                                    }`}
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                  >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                  </svg>
+                                </div>
+                              </button>
 
-                            {/* Services inside category */}
-                            {isOpen && (
-                              <div className="border-t border-slate-200 divide-y divide-slate-100 bg-white">
-                                {cat.services.map((service) => {
-                                  const finalPrice = service.discounted_price || service.price;
-                                  const isChecked = selectedServices.includes(service.id);
-                                  const isExpanded = expandedDescId === service.id;
-                                  const hasDescription = Boolean(service.description && service.description.trim().length > 0);
-                                  const isLongDescription = Boolean(
-                                    hasDescription && (
-                                      (service.description && service.description.trim().length > 60) ||
-                                      (service.description && service.description.split(/\r?\n/).filter((l) => l.trim().length > 0).length > 2)
-                                    )
-                                  );
+                              {/* Services inside category */}
+                              {isOpen && (
+                                <div className="border-t border-slate-200 divide-y divide-slate-100 bg-white">
+                                  {cat.services.map((service) => {
+                                    const finalPrice = service.discounted_price || service.price;
+                                    const isChecked = selectedServices.includes(service.id);
+                                    const isExpanded = expandedDescId === service.id;
+                                    const hasDescription = Boolean(service.description && service.description.trim().length > 0);
+                                    const isLongDescription = Boolean(
+                                      hasDescription && (
+                                        (service.description && service.description.trim().length > 60) ||
+                                        (service.description && service.description.split(/\r?\n/).filter((l) => l.trim().length > 0).length > 2)
+                                      )
+                                    );
 
-                                  return (
-                                    <div
-                                      key={service.id}
-                                      role="button"
-                                      tabIndex={0}
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter" || e.key === " ") {
-                                          e.preventDefault();
+                                    return (
+                                      <div
+                                        key={service.id}
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter" || e.key === " ") {
+                                            e.preventDefault();
+                                            setSelectedServices((prev) =>
+                                              prev.includes(service.id)
+                                                ? prev.filter((id) => id !== service.id)
+                                                : [...prev, service.id]
+                                            );
+                                            setApiError("");
+                                          }
+                                        }}
+                                        onClick={() => {
                                           setSelectedServices((prev) =>
                                             prev.includes(service.id)
                                               ? prev.filter((id) => id !== service.id)
                                               : [...prev, service.id]
                                           );
                                           setApiError("");
-                                        }
-                                      }}
-                                      onClick={() => {
-                                        setSelectedServices((prev) =>
-                                          prev.includes(service.id)
-                                            ? prev.filter((id) => id !== service.id)
-                                            : [...prev, service.id]
-                                        );
-                                        setApiError("");
-                                      }}
-                                      className={`w-full flex items-start justify-between px-4 py-3 text-left transition-colors cursor-pointer ${
-                                        isChecked
-                                          ? "bg-[#D4AF37]/10"
-                                          : "hover:bg-slate-50"
-                                      }`}
-                                    >
-                                      <div className="flex items-start gap-3 min-w-0 flex-1">
-                                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                                          isChecked ? "bg-[#D4AF37] border-[#D4AF37]" : "border-slate-300"
-                                        }`}>
-                                          {isChecked && (
-                                            <svg className="w-2.5 h-2.5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                          )}
-                                        </span>
-                                        <div className="min-w-0 flex-1">
-                                          <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="text-xs font-semibold text-[#111111] leading-tight">{service.title}</span>
-                                            {service.discount && service.discount > 0 ? (
-                                              <span className="bg-[#111111] text-[#D4AF37] text-[9px] font-extrabold px-1.5 py-0.2 rounded-full uppercase">
-                                                {service.discount}% OFF
-                                              </span>
-                                            ) : null}
-                                          </div>
-
-                                          {/* 2-line Description with Read More / Show Less */}
-                                          {hasDescription && (
-                                            <div className="mt-1">
-                                              <p
-                                                className={`text-[11px] text-slate-500 font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
-                                                  isExpanded ? "" : "line-clamp-2"
-                                                }`}
-                                                style={
-                                                  !isExpanded
-                                                    ? {
-                                                        display: "-webkit-box",
-                                                        WebkitLineClamp: 2,
-                                                        WebkitBoxOrient: "vertical",
-                                                        overflow: "hidden",
-                                                      }
-                                                    : undefined
-                                                }
-                                              >
-                                                {service.description}
-                                              </p>
-
-                                              {isLongDescription && (
-                                                <button
-                                                  type="button"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setExpandedDescId(isExpanded ? null : service.id);
-                                                  }}
-                                                  className="mt-1 text-[10px] font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none"
-                                                >
-                                                  <span>{isExpanded ? "Show Less" : "Read More"}</span>
-                                                  <span className="text-[8px] leading-none transition-transform duration-200">
-                                                    {isExpanded ? "▲" : "▼"}
-                                                  </span>
-                                                </button>
-                                              )}
+                                        }}
+                                        className={`w-full flex items-start justify-between px-4 py-3 text-left transition-colors cursor-pointer ${
+                                          isChecked
+                                            ? "bg-[#D4AF37]/10"
+                                            : "hover:bg-slate-50"
+                                        }`}
+                                      >
+                                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                                          <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                                            isChecked ? "bg-[#D4AF37] border-[#D4AF37]" : "border-slate-300"
+                                          }`}>
+                                            {isChecked && (
+                                              <svg className="w-2.5 h-2.5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                              </svg>
+                                            )}
+                                          </span>
+                                          <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <span className="text-xs font-semibold text-[#111111] leading-tight">{service.title}</span>
+                                              {service.discount && service.discount > 0 ? (
+                                                <span className="bg-[#111111] text-[#D4AF37] text-[9px] font-extrabold px-1.5 py-0.2 rounded-full uppercase">
+                                                  {service.discount}% OFF
+                                                </span>
+                                              ) : null}
                                             </div>
+
+                                            {/* 2-line Description with Read More / Show Less */}
+                                            {hasDescription && (
+                                              <div className="mt-1">
+                                                <p
+                                                  className={`text-[11px] text-slate-500 font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
+                                                    isExpanded ? "" : "line-clamp-2"
+                                                  }`}
+                                                  style={
+                                                    !isExpanded
+                                                      ? {
+                                                          display: "-webkit-box",
+                                                          WebkitLineClamp: 2,
+                                                          WebkitBoxOrient: "vertical",
+                                                          overflow: "hidden",
+                                                        }
+                                                      : undefined
+                                                  }
+                                                >
+                                                  {service.description}
+                                                </p>
+
+                                                {isLongDescription && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setExpandedDescId(isExpanded ? null : service.id);
+                                                    }}
+                                                    className="mt-1 text-[10px] font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none"
+                                                  >
+                                                    <span>{isExpanded ? "Show Less" : "Read More"}</span>
+                                                    <span className="text-[8px] leading-none transition-transform duration-200">
+                                                      {isExpanded ? "▲" : "▼"}
+                                                    </span>
+                                                  </button>
+                                                )}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        <div className="text-right shrink-0 ml-3 pt-0.5">
+                                          <span className={`text-xs font-bold font-mono ${
+                                            isChecked ? "text-[#996515]" : "text-slate-600"
+                                          }`}>
+                                            Rs. {finalPrice.toLocaleString()}
+                                          </span>
+                                          {!!service.discount && service.discount > 0 && (
+                                            <span className="block text-[9px] text-emerald-600 font-bold">{service.discount}% OFF</span>
                                           )}
                                         </div>
                                       </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
 
-                                      <div className="text-right shrink-0 ml-3 pt-0.5">
-                                        <span className={`text-xs font-bold font-mono ${
-                                          isChecked ? "text-[#996515]" : "text-slate-600"
-                                        }`}>
-                                          Rs. {finalPrice.toLocaleString()}
-                                        </span>
-                                        {!!service.discount && service.discount > 0 && (
-                                          <span className="block text-[9px] text-emerald-600 font-bold">{service.discount}% OFF</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                  {selectedServices.length > 0 && (
+                    <div className="mt-2 flex items-center justify-between px-3 py-2 rounded-xl bg-[#111111] text-white text-xs">
+                      <span className="font-semibold text-slate-300">Combined Total:</span>
+                      <span className="font-extrabold text-[#D4AF37] font-mono">{getSelectedServicesTotal()}</span>
                     </div>
-                  );
-                })()}
-
-                {selectedServices.length > 0 && (
-                  <div className="mt-2 flex items-center justify-between px-3 py-2 rounded-xl bg-[#111111] text-white text-xs">
-                    <span className="font-semibold text-slate-300">Combined Total:</span>
-                    <span className="font-extrabold text-[#D4AF37] font-mono">{getSelectedServicesTotal()}</span>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
               {/* Date & Time */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

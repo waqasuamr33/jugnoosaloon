@@ -369,15 +369,15 @@ export default function ServicesPage() {
                   const imageSrc =
                     rawImg && !failedImages[service.id] ? rawImg : fallbackImg;
 
-                  const descText =
-                    service.description && service.description.trim().length > 0
-                      ? service.description
-                      : "Luxury salon treatment tailored by Jugnu's senior beauticians.";
+                  const descText = service.description?.trim() || "";
+                  const hasDesc = descText.length > 0;
+                  const isDescExpanded = Boolean(expandedDescIds[service.id]);
+                  const isLongDesc = descText.length > 60 || descText.includes("\n");
 
                   return (
                     <div
                       key={`mobile-${service.id}`}
-                      className={`bg-white rounded-2xl border p-3.5 flex items-center justify-between gap-3 shadow-xs transition-all duration-200 relative group cursor-pointer ${
+                      className={`bg-white rounded-2xl border p-3.5 flex items-start justify-between gap-3 shadow-xs transition-all duration-200 relative group cursor-pointer ${
                         isSelected
                           ? "border-[#D4AF37] ring-1.5 ring-[#D4AF37]/70 shadow-[0_4px_16px_rgba(212,175,55,0.18)] bg-[#FAF8F2]/40"
                           : "border-slate-200/90 hover:border-[#D4AF37]/50 active:scale-[0.99]"
@@ -401,10 +401,33 @@ export default function ServicesPage() {
                             {service.title}
                           </h3>
 
-                          {/* Brief description snippet */}
-                          <p className="text-[11px] text-slate-500 font-normal leading-tight line-clamp-1 mb-2">
-                            {descText}
-                          </p>
+                          {/* Description with Read More / Read Less (only if backend provides description) */}
+                          {hasDesc && (
+                            <div className="mb-2">
+                              <p
+                                className={`text-[11px] font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
+                                  isDescExpanded ? "text-slate-700" : "text-slate-500 line-clamp-1"
+                                }`}
+                              >
+                                {descText}
+                              </p>
+                              {isLongDesc && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleExpandDesc(service.id);
+                                  }}
+                                  className="mt-0.5 text-[10px] font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none"
+                                >
+                                  <span>{isDescExpanded ? "Read Less" : "Read More"}</span>
+                                  <span className="text-[7px] leading-none transition-transform duration-200">
+                                    {isDescExpanded ? "▲" : "▼"}
+                                  </span>
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         {/* Price & Book Solo Action */}
@@ -507,10 +530,8 @@ export default function ServicesPage() {
                   const imageSrc =
                     rawImg && !failedImages[service.id] ? rawImg : fallbackImg;
                   const isDescExpanded = Boolean(expandedDescIds[service.id]);
-                  const descText =
-                    service.description && service.description.trim().length > 0
-                      ? service.description
-                      : "Luxury salon treatment tailored by Jugnu's senior beauticians.";
+                  const descText = service.description?.trim() || "";
+                  const hasDesc = descText.length > 0;
                   const isLongDesc = descText.length > 70 || descText.includes("\n");
 
                   return (
@@ -594,31 +615,33 @@ export default function ServicesPage() {
                           {service.title}
                         </h3>
 
-                        {/* Description with Read More / Read Less */}
-                        <div className="mb-4">
-                          <p
-                            className={`text-xs font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
-                              isDescExpanded ? "text-slate-700" : "text-slate-500 line-clamp-2"
-                            }`}
-                          >
-                            {descText}
-                          </p>
-                          {isLongDesc && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleExpandDesc(service.id);
-                              }}
-                              className="mt-1.5 text-[11px] font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none"
+                        {/* Description with Read More / Read Less (only if backend provides description) */}
+                        {hasDesc && (
+                          <div className="mb-4">
+                            <p
+                              className={`text-xs font-normal leading-relaxed whitespace-pre-line transition-all duration-200 ${
+                                isDescExpanded ? "text-slate-700" : "text-slate-500 line-clamp-2"
+                              }`}
                             >
-                              <span>{isDescExpanded ? "Read Less" : "Read More"}</span>
-                              <span className="text-[8px] leading-none transition-transform duration-200">
-                                {isDescExpanded ? "▲" : "▼"}
-                              </span>
-                            </button>
-                          )}
-                        </div>
+                              {descText}
+                            </p>
+                            {isLongDesc && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleExpandDesc(service.id);
+                                }}
+                                className="mt-1.5 text-[11px] font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none"
+                              >
+                                <span>{isDescExpanded ? "Read Less" : "Read More"}</span>
+                                <span className="text-[8px] leading-none transition-transform duration-200">
+                                  {isDescExpanded ? "▲" : "▼"}
+                                </span>
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <div className="pt-4 border-t border-slate-100 mt-2 space-y-3.5">
@@ -856,6 +879,7 @@ export default function ServicesPage() {
         onClose={() => setBookingOpen(false)}
         initialService={selectedSingleService}
         initialServices={selectedServiceIdsForModal}
+        lockSelectedServices={true}
       />
     </main>
   );
