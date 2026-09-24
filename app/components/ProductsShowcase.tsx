@@ -25,7 +25,11 @@ export default function ProductsShowcase({ onOpenBooking: _onOpenBooking }: Prod
           getProductCategories(),
         ]);
         if (productsData && productsData.length > 0) {
-          setProducts(productsData);
+          // Exclude internal uncategorized products ("Salon Care Essentials")
+          const retailProducts = productsData.filter(
+            (p) => Boolean(p.product_category_id || p.category)
+          );
+          setProducts(retailProducts);
         }
         if (categoriesData && categoriesData.length > 0) {
           setCategories(categoriesData);
@@ -41,8 +45,11 @@ export default function ProductsShowcase({ onOpenBooking: _onOpenBooking }: Prod
 
   // Filter products for showcase
   const filteredProducts = products.filter((p) => {
+    // Strictly exclude uncategorized/zero-price products from showcase
+    if (!p.product_category_id && !p.category) return false;
+    if (typeof p.price === "number" && p.price <= 0.05) return false;
+
     if (selectedCategory === "all") return true;
-    if (selectedCategory === "uncategorized") return !p.product_category_id && !p.category;
     return (
       String(p.product_category_id) === selectedCategory ||
       String(p.category?.id) === selectedCategory ||
@@ -81,44 +88,113 @@ export default function ProductsShowcase({ onOpenBooking: _onOpenBooking }: Prod
 
         {/* Category Pills in Showcase */}
         {categories.length > 0 && (
-          <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-none">
-            <button
-              type="button"
-              onClick={() => setSelectedCategory("all")}
-              className="flex-shrink-0 cursor-pointer transition-all duration-300 px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm"
-              style={{
-                border: selectedCategory === "all" ? "2px solid #D4AF37" : "1.5px solid rgba(0,0,0,0.12)",
-                backgroundColor: selectedCategory === "all" ? "#111111" : "#FFFFFF",
-                color: selectedCategory === "all" ? "#D4AF37" : "#111111",
-              }}
-            >
-              All Products ({products.length})
-            </button>
-            {categories.map((cat) => {
-              const count = products.filter(
-                (p) =>
-                  p.product_category_id === cat.id ||
-                  p.category?.id === cat.id ||
-                  p.category?.title?.toLowerCase() === cat.title.toLowerCase()
-              ).length;
-              const active = selectedCategory === String(cat.id);
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setSelectedCategory(String(cat.id))}
-                  className="flex-shrink-0 cursor-pointer transition-all duration-300 px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm flex items-center space-x-2"
-                  style={{
-                    border: active ? "2px solid #D4AF37" : "1.5px solid rgba(0,0,0,0.12)",
-                    backgroundColor: active ? "#111111" : "#FFFFFF",
-                    color: active ? "#D4AF37" : "#111111",
-                  }}
+          <div className="mb-8">
+            {/* Mobile-Only Category Selector Dropdown */}
+            <div className="sm:hidden mb-4">
+              <div className="relative">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  aria-label="Select Product Category"
+                  className="w-full appearance-none bg-white border border-[#D4AF37]/50 focus:border-[#111111] rounded-xl px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#111111] pr-10 shadow-sm focus:outline-none transition-colors"
                 >
-                  <span>{cat.title}</span>
-                  <span className="text-[10px] opacity-75 font-semibold">({count})</span>
-                </button>
-              );
-            })}
+                  <option value="all">All Products ({products.length})</option>
+                  {categories.map((cat) => {
+                    const count = products.filter(
+                      (p) =>
+                        p.product_category_id === cat.id ||
+                        p.category?.id === cat.id ||
+                        p.category?.title?.toLowerCase() === cat.title.toLowerCase()
+                    ).length;
+                    return (
+                      <option key={cat.id} value={String(cat.id)}>
+                        {cat.title} ({count})
+                      </option>
+                    );
+                  })}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-[#996515]">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Clean Wrapped Pills for Desktop & Mobile */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+              <button
+                type="button"
+                onClick={() => setSelectedCategory("all")}
+                className="cursor-pointer transition-all duration-300 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider border shadow-sm"
+                style={{
+                  border: selectedCategory === "all" ? "2px solid #D4AF37" : "1.5px solid rgba(0,0,0,0.12)",
+                  backgroundColor: selectedCategory === "all" ? "#111111" : "#FFFFFF",
+                  color: selectedCategory === "all" ? "#D4AF37" : "#111111",
+                  boxShadow: selectedCategory === "all" ? "0 6px 18px rgba(212,175,55,0.25)" : "0 1px 4px rgba(0,0,0,0.03)",
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedCategory !== "all") {
+                    e.currentTarget.style.borderColor = "#D4AF37";
+                    e.currentTarget.style.backgroundColor = "#FAF8F2";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedCategory !== "all") {
+                    e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)";
+                    e.currentTarget.style.backgroundColor = "#FFFFFF";
+                  }
+                }}
+              >
+                All Products ({products.length})
+              </button>
+              {categories.map((cat) => {
+                const count = products.filter(
+                  (p) =>
+                    p.product_category_id === cat.id ||
+                    p.category?.id === cat.id ||
+                    p.category?.title?.toLowerCase() === cat.title.toLowerCase()
+                ).length;
+                const active = selectedCategory === String(cat.id);
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSelectedCategory(String(cat.id))}
+                    className="cursor-pointer transition-all duration-300 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider border shadow-sm flex items-center space-x-2"
+                    style={{
+                      border: active ? "2px solid #D4AF37" : "1.5px solid rgba(0,0,0,0.12)",
+                      backgroundColor: active ? "#111111" : "#FFFFFF",
+                      color: active ? "#D4AF37" : "#111111",
+                      boxShadow: active ? "0 6px 18px rgba(212,175,55,0.25)" : "0 1px 4px rgba(0,0,0,0.03)",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!active) {
+                        e.currentTarget.style.borderColor = "#D4AF37";
+                        e.currentTarget.style.backgroundColor = "#FAF8F2";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) {
+                        e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)";
+                        e.currentTarget.style.backgroundColor = "#FFFFFF";
+                      }
+                    }}
+                  >
+                    <span>{cat.title}</span>
+                    <span
+                      className="text-[10px] px-2 py-0.5 rounded-full font-extrabold transition-colors"
+                      style={{
+                        backgroundColor: active ? "rgba(212,175,55,0.2)" : "#F1F1EF",
+                        color: active ? "#D4AF37" : "#666666",
+                      }}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 

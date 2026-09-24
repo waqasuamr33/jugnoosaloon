@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { getServiceCategories, getServices, getProducts, normalizeImageUrl } from "../lib/api";
 
 interface ServiceAndWorkflowSectionProps {
-  onOpenBooking: (serviceName?: string) => void;
+  onOpenBooking?: (serviceName?: string) => void;
 }
 
 interface ServiceItem {
@@ -23,7 +24,8 @@ interface CategoryData {
   label: string;
   icon: string;
   headline: string;
-  subline: string;
+  subline?: string | null;
+  description?: string | null;
   services: ServiceItem[];
   image: string | null;
   servicesCount?: number;
@@ -116,12 +118,15 @@ export default function ServiceAndWorkflowSection({
               }
             }
 
+            const categoryDesc = (cat.description && cat.description.trim().length > 0) ? cat.description.trim() : null;
+
             return {
               id: `cat-${cat.id}`,
               label: cat.title,
               icon: icons[idx % icons.length],
               headline: cat.title,
-              subline: cat.description || `Luxury ${cat.title} treatments at Jugnu's Saloon.`,
+              subline: categoryDesc,
+              description: categoryDesc,
               services: matchedServices,
               image: categoryImage,
               servicesCount: cat.services_count ?? matchedServices.length,
@@ -349,11 +354,13 @@ export default function ServiceAndWorkflowSection({
                         </span>
                       )}
                     </div>
-                    <p
-                      className="text-xs text-slate-600 font-normal leading-relaxed"
-                    >
-                      {current.subline}
-                    </p>
+                    {current.subline ? (
+                      <p
+                        className="text-xs text-slate-600 font-normal leading-relaxed"
+                      >
+                        {current.subline}
+                      </p>
+                    ) : null}
                   </div>
 
                   {/* service rows - SCROLLABLE CONTAINER */}
@@ -384,11 +391,11 @@ export default function ServiceAndWorkflowSection({
                           <div
                             key={item.id}
                             onClick={() => {
-                              if (expandedServiceId && expandedServiceId !== item.id) {
-                                setExpandedServiceId(null);
-                              }
+                              setExpandedServiceId(isExpanded ? null : item.id);
                             }}
-                            className="group flex items-start justify-between gap-3 sm:gap-4 transition-all duration-200 hover:bg-[#FAF8F2] px-3 py-3.5 rounded-xl cursor-default"
+                            className={`group flex items-start justify-between gap-3 sm:gap-4 transition-all duration-200 hover:bg-[#FAF8F2] px-3 py-3.5 rounded-xl cursor-pointer ${
+                              isExpanded ? "bg-[#FAF8F2] ring-1 ring-[#D4AF37]/30" : ""
+                            }`}
                             style={{
                               borderBottom:
                                 idx < current.services.length - 1
@@ -452,8 +459,8 @@ export default function ServiceAndWorkflowSection({
                               )}
                             </div>
 
-                            {/* price + book */}
-                            <div className="flex items-center gap-3 sm:gap-5 flex-shrink-0 pt-0.5">
+                            {/* rate / price */}
+                            <div className="flex items-center flex-shrink-0 pt-0.5 ml-2">
                               <div className="text-right">
                                 <span
                                   className="font-bold font-mono text-base block text-[#996515]"
@@ -466,40 +473,6 @@ export default function ServiceAndWorkflowSection({
                                   </span>
                                 ) : null}
                               </div>
-
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onOpenBooking(item.name);
-                                }}
-                                className="cursor-pointer transition-all duration-200"
-                                style={{
-                                  padding: "8px 18px",
-                                  fontSize: "10px",
-                                  fontWeight: 700,
-                                  letterSpacing: "0.15em",
-                                  textTransform: "uppercase",
-                                  border: "1.5px solid #111111",
-                                  borderRadius: "6px",
-                                  background: "#111111",
-                                  color: "#FFFFFF",
-                                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = "#D4AF37";
-                                  e.currentTarget.style.borderColor = "#D4AF37";
-                                  e.currentTarget.style.color = "#111111";
-                                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(212,175,55,0.4)";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = "#111111";
-                                  e.currentTarget.style.borderColor = "#111111";
-                                  e.currentTarget.style.color = "#FFFFFF";
-                                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-                                }}
-                              >
-                                Book
-                              </button>
                             </div>
                           </div>
                         );
@@ -509,9 +482,9 @@ export default function ServiceAndWorkflowSection({
 
                   {/* CTA */}
                   <div className="flex-shrink-0 mt-4 pt-4 bg-white/95" style={{ borderTop: "1px solid rgba(0,0,0,0.08)" }}>
-                    <button
-                      onClick={() => onOpenBooking()}
-                      className="w-full cursor-pointer font-bold uppercase tracking-widest transition-all duration-300"
+                    <Link
+                      href="/services"
+                      className="block w-full text-center cursor-pointer font-bold uppercase tracking-widest transition-all duration-300"
                       style={{
                         padding: "15px 0",
                         fontSize: "11px",
@@ -534,8 +507,8 @@ export default function ServiceAndWorkflowSection({
                         e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.15)";
                       }}
                     >
-                      Book a Consultation
-                    </button>
+                      Book a Service
+                    </Link>
                   </div>
                 </div>
 
@@ -544,6 +517,9 @@ export default function ServiceAndWorkflowSection({
                   const activeService = current.services.find((s) => s.id === expandedServiceId);
                   const displayImage = activeService?.imageUrl || current.image;
                   const imageFailed = Boolean(displayImage && failedImages[displayImage]);
+                  const displayDescription = activeService
+                    ? (activeService.description && activeService.description.trim().length > 0 ? activeService.description.trim() : null)
+                    : (current.description && current.description.trim().length > 0 ? current.description.trim() : null);
 
                   return (
                     <div className="relative h-80 sm:h-96 lg:h-full min-h-[300px] overflow-hidden bg-[#F8F8F6]">
@@ -582,9 +558,11 @@ export default function ServiceAndWorkflowSection({
                             <h4 className="font-sans text-lg lg:text-xl font-bold uppercase text-[#111111] line-clamp-1">
                               {activeService ? activeService.name : current.headline}
                             </h4>
-                            <p className="text-xs text-slate-600 font-normal line-clamp-2">
-                              Reserve your session with senior artists &amp; hydrafacial experts.
-                            </p>
+                            {displayDescription ? (
+                              <p className="text-xs text-slate-600 font-normal line-clamp-2">
+                                {displayDescription}
+                              </p>
+                            ) : null}
                           </div>
                         </>
                       ) : (
@@ -601,9 +579,11 @@ export default function ServiceAndWorkflowSection({
                           <h4 className="font-sans text-2xl font-extrabold uppercase text-white tracking-wide max-w-xs mb-3">
                             {current.headline}
                           </h4>
-                          <p className="text-xs text-slate-300 max-w-sm leading-relaxed mb-6">
-                            {current.subline}
-                          </p>
+                          {displayDescription ? (
+                            <p className="text-xs text-slate-300 max-w-sm leading-relaxed mb-6">
+                              {displayDescription}
+                            </p>
+                          ) : null}
                           <div className="w-16 h-[2px] bg-[#D4AF37] rounded-full" />
                         </div>
                       )}
@@ -635,9 +615,9 @@ export default function ServiceAndWorkflowSection({
               />
             </div>
 
-            <button
-              onClick={() => onOpenBooking()}
-              className="self-start md:self-auto cursor-pointer text-xs font-bold uppercase tracking-widest transition-all duration-300"
+            <Link
+              href="/services"
+              className="self-start md:self-auto cursor-pointer text-xs font-bold uppercase tracking-widest transition-all duration-300 text-center"
               style={{
                 padding: "14px 28px",
                 borderRadius: "6px",
@@ -659,8 +639,8 @@ export default function ServiceAndWorkflowSection({
                 e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,0,0,0.1)";
               }}
             >
-              Get a Consultation
-            </button>
+              Book an Appointment
+            </Link>
           </div>
 
           {/* steps grid */}

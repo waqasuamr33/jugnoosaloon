@@ -29,22 +29,22 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#FAFAFA] text-[#111111] relative">
       {/* Navigation Header */}
-      <Navbar onOpenBooking={handleOpenBooking} />
+      <Navbar />
 
       {/* Hero Section */}
-      <Hero onOpenBooking={() => handleOpenBooking()} />
+      <Hero />
 
       {/* Benefits & Signature Experience */}
-      <WhyChooseUs onOpenBooking={handleOpenBooking} />
+      <WhyChooseUs />
 
       {/* Combined Services & How It Works Master Section (Inspiration Design) */}
-      <ServiceAndWorkflowSection onOpenBooking={handleOpenBooking} />
+      <ServiceAndWorkflowSection />
 
       {/* Signature Work & Transformations Showcase (Top 6 Pinterest-Style) */}
-      <WorkShowcase onOpenBooking={handleOpenBooking} />
+      <WorkShowcase />
 
       {/* Products Showcase Section (Home Page) */}
-      <ProductsShowcase onOpenBooking={handleOpenBooking} />
+      <ProductsShowcase />
 
       {/* Google 5-Star Reviews Section */}
       <NewsPress />
@@ -54,9 +54,9 @@ export default function Home() {
 
 
       {/* Footer */}
-      <Footer onOpenBooking={() => handleOpenBooking()} />
+      <Footer />
 
-      {/* Interactive Booking Drawer / Modal */}
+      {/* Interactive Booking Drawer / Modal (fallback if opened programmatically) */}
       <BookingModal
         isOpen={bookingOpen}
         onClose={handleCloseBooking}

@@ -21,7 +21,7 @@ export default function AboutPage() {
 
   return (
     <main className="min-h-screen bg-[#FAFAFA] text-[#111111] relative">
-      <Navbar onOpenBooking={handleOpenBooking} />
+      <Navbar />
 
       {/* Hero Header Banner with Golden Light Ray */}
       <PageHero
@@ -30,10 +30,10 @@ export default function AboutPage() {
       />
 
       {/* Main Brand Story */}
-      <AboutSection onOpenBooking={() => handleOpenBooking("Beauty Consultation")} />
+      <AboutSection />
 
       {/* Why Choose Us */}
-      <WhyChooseUs onOpenBooking={handleOpenBooking} />
+      <WhyChooseUs />
 
       {/* Google 5-Star Reviews Section */}
       <GoogleReviews />
@@ -41,7 +41,7 @@ export default function AboutPage() {
       {/* Saloon Location & Google Map */}
       <LocationMap />
 
-      <Footer onOpenBooking={() => handleOpenBooking()} />
+      <Footer />
 
       <BookingModal
         isOpen={bookingOpen}

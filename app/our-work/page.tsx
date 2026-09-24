@@ -78,7 +78,7 @@ export default function OurWorkPage() {
 
   return (
     <main className="min-h-screen bg-[#FAFAFA] text-[#111111] relative">
-      <Navbar onOpenBooking={handleOpenBooking} />
+      <Navbar />
 
       {/* Hero Header Banner with Golden Light Ray */}
       <PageHero
@@ -215,7 +215,7 @@ export default function OurWorkPage() {
       {/* Google 5-Star Reviews & Client Testimonials */}
       <NewsPress />
 
-      <Footer onOpenBooking={() => handleOpenBooking()} />
+      <Footer />
 
       <BookingModal
         isOpen={bookingOpen}

@@ -230,7 +230,13 @@ export async function getProducts(
     }
 
     const json = await res.json();
-    return json.success && Array.isArray(json.data) ? json.data : [];
+    const list: ProductItem[] = json.success && Array.isArray(json.data) ? json.data : [];
+    // Filter out internal uncategorized/salon-use products (formerly grouped under "Salon Care Essentials", price 0, developers, dyes)
+    return list.filter((p) => {
+      const hasCategory = Boolean(p.product_category_id || p.category);
+      const isPriceValid = typeof p.price === 'number' && p.price > 0.05;
+      return hasCategory && isPriceValid;
+    });
   } catch (error) {
     console.warn('[API] Unable to fetch products from backend:', error);
     return [];
@@ -259,7 +265,12 @@ export async function getServices(categoryId?: number, search?: string): Promise
     }
 
     const json = await res.json();
-    return json.success && Array.isArray(json.data) ? json.data : [];
+    const list: ServiceItem[] = json.success && Array.isArray(json.data) ? json.data : [];
+    // Exclude internal 'Add On' / 'addon' services from site displays
+    return list.filter((s) => {
+      const title = s.title?.trim().toLowerCase();
+      return title !== 'add on' && title !== 'addon' && title !== 'add-on';
+    });
   } catch (error) {
     console.warn('[API] Unable to fetch services from backend:', error);
     return [];

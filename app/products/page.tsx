@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import BookingModal from "../components/BookingModal";
@@ -19,6 +19,20 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const { cart, addToCart } = useCart();
 
+  // Category view mode: wrapped (all visible) or compact carousel
+  const [viewAllCategories, setViewAllCategories] = useState<boolean>(true);
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
+
+  const handleScrollCategories = (direction: "left" | "right") => {
+    if (categoryScrollRef.current) {
+      const scrollAmount = 300;
+      categoryScrollRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
   useEffect(() => {
     async function loadStoreData() {
       try {
@@ -27,7 +41,11 @@ export default function ProductsPage() {
           getProductCategories(),
         ]);
         if (productsData && productsData.length > 0) {
-          setProducts(productsData);
+          // Exclude internal uncategorized products ("Salon Care Essentials")
+          const retailProducts = productsData.filter(
+            (p) => Boolean(p.product_category_id || p.category)
+          );
+          setProducts(retailProducts);
         }
         if (categoriesData && categoriesData.length > 0) {
           setCategories(categoriesData);
@@ -48,9 +66,6 @@ export default function ProductsPage() {
 
   // Compute category counts
   const totalCount = products.length;
-  const uncategorizedCount = products.filter(
-    (p) => !p.product_category_id && !p.category
-  ).length;
 
   // Dynamically assemble category tabs
   const categoryTabs: { id: string; title: string; count: number }[] = [
@@ -71,21 +86,15 @@ export default function ProductsPage() {
     });
   });
 
-  if (uncategorizedCount > 0) {
-    categoryTabs.push({
-      id: "uncategorized",
-      title: "Salon Care Essentials",
-      count: uncategorizedCount,
-    });
-  }
-
   // Filter products by selected category and search term
   const filteredProducts = products.filter((p) => {
+    // Strictly exclude uncategorized/zero-price products from all views including "all"
+    if (!p.product_category_id && !p.category) return false;
+    if (typeof p.price === "number" && p.price <= 0.05) return false;
+
     let matchesCategory = true;
     if (selectedCategory === "all") {
       matchesCategory = true;
-    } else if (selectedCategory === "uncategorized") {
-      matchesCategory = !p.product_category_id && !p.category;
     } else {
       matchesCategory =
         String(p.product_category_id) === selectedCategory ||
@@ -106,7 +115,7 @@ export default function ProductsPage() {
 
   return (
     <main className="min-h-screen bg-[#FAFAFA] text-[#111111] relative">
-      <Navbar onOpenBooking={() => handleOpenBooking()} />
+      <Navbar />
 
       {/* Hero Header Banner with Golden Light Ray */}
       <PageHero
@@ -138,55 +147,197 @@ export default function ProductsPage() {
           </div>
 
           {/* Luxury Category Filter Tabs */}
-          <div className="mb-12">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs uppercase font-extrabold tracking-wider text-[#111111] flex items-center gap-2">
-                <span className="text-[#996515]">✦</span> Filter by Category
-              </span>
-              {(selectedCategory !== "all" || searchQuery) && (
+          <div className="mb-10 sm:mb-12">
+            <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="text-xs uppercase font-extrabold tracking-wider text-[#111111] flex items-center gap-2">
+                  <span className="text-[#996515]">✦</span> Filter by Category
+                </span>
+                <span className="text-[10px] font-bold text-slate-500 bg-[#F1F1EF] px-2.5 py-0.5 rounded-full border border-slate-200">
+                  {categoryTabs.length} Categories
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* View Mode Toggle: Wrapped vs Carousel */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setSelectedCategory("all");
-                    setSearchQuery("");
-                  }}
-                  className="text-xs font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer underline underline-offset-4"
+                  onClick={() => setViewAllCategories((prev) => !prev)}
+                  className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#111111] hover:text-[#996515] transition-colors cursor-pointer bg-[#F8F8F6] hover:bg-[#FAF8F2] border border-slate-300 hover:border-[#D4AF37] px-3.5 py-1.5 rounded-lg shadow-xs"
                 >
-                  Clear Filters
+                  <span className="text-[#996515] font-mono text-sm leading-none">
+                    {viewAllCategories ? "↔" : "⊞"}
+                  </span>
+                  <span>{viewAllCategories ? "Scroll Mode" : "Show All"}</span>
                 </button>
-              )}
+
+                {(selectedCategory !== "all" || searchQuery) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategory("all");
+                      setSearchQuery("");
+                    }}
+                    className="text-xs font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer underline underline-offset-4"
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center gap-2.5 overflow-x-auto pb-3 pt-1 scrollbar-none">
-              {categoryTabs.map((cat) => {
-                const active = selectedCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className="flex-shrink-0 cursor-pointer transition-all duration-300 flex items-center space-x-2.5 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm group"
-                    style={{
-                      border: active ? "2px solid #D4AF37" : "1.5px solid rgba(0,0,0,0.12)",
-                      backgroundColor: active ? "#111111" : "#FFFFFF",
-                      color: active ? "#D4AF37" : "#111111",
-                      boxShadow: active ? "0 6px 18px rgba(212,175,55,0.25)" : "0 1px 4px rgba(0,0,0,0.03)",
-                    }}
-                  >
-                    <span>{cat.title}</span>
-                    <span
-                      className="text-[10px] px-2 py-0.5 rounded-full font-extrabold transition-colors"
+            {/* Mobile-Only Quick Category Dropdown Selector */}
+            <div className="sm:hidden mb-3">
+              <div className="relative">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  aria-label="Select Product Category"
+                  className="w-full appearance-none bg-white border border-[#D4AF37]/50 focus:border-[#111111] rounded-xl px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#111111] pr-10 shadow-sm focus:outline-none transition-colors"
+                >
+                  {categoryTabs.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.title} ({cat.count})
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-[#996515]">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Category Pills Navigation */}
+            {viewAllCategories ? (
+              /* Wrapped Grid View: Shows all categories cleanly without any clipping */
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 pt-1 pb-2">
+                {categoryTabs.map((cat) => {
+                  const active = selectedCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className="cursor-pointer transition-all duration-300 flex items-center space-x-2 px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider border shadow-sm group"
                       style={{
-                        backgroundColor: active ? "rgba(212,175,55,0.2)" : "#F1F1EF",
-                        color: active ? "#D4AF37" : "#666666",
+                        border: active ? "2px solid #D4AF37" : "1.5px solid rgba(0,0,0,0.12)",
+                        backgroundColor: active ? "#111111" : "#FFFFFF",
+                        color: active ? "#D4AF37" : "#111111",
+                        boxShadow: active
+                          ? "0 6px 18px rgba(212,175,55,0.25)"
+                          : "0 1px 4px rgba(0,0,0,0.03)",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!active) {
+                          e.currentTarget.style.borderColor = "#D4AF37";
+                          e.currentTarget.style.backgroundColor = "#FAF8F2";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!active) {
+                          e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)";
+                          e.currentTarget.style.backgroundColor = "#FFFFFF";
+                        }
                       }}
                     >
-                      {cat.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                      <span>{cat.title}</span>
+                      <span
+                        className="text-[10px] px-2 py-0.5 rounded-full font-extrabold transition-colors"
+                        style={{
+                          backgroundColor: active ? "rgba(212,175,55,0.2)" : "#F1F1EF",
+                          color: active ? "#D4AF37" : "#666666",
+                        }}
+                      >
+                        {cat.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Carousel View: Horizontal scrollable with navigation arrows */
+              <div className="relative group">
+                {/* Left Scroll Arrow */}
+                <button
+                  type="button"
+                  onClick={() => handleScrollCategories("left")}
+                  aria-label="Scroll categories left"
+                  className="hidden sm:flex absolute -left-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white border border-[#D4AF37]/50 shadow-md items-center justify-center text-[#111111] hover:bg-[#111111] hover:text-[#D4AF37] hover:border-[#111111] transition-all cursor-pointer font-bold"
+                >
+                  ‹
+                </button>
+
+                <div
+                  ref={categoryScrollRef}
+                  onWheel={(e) => {
+                    if (e.deltaY !== 0 && categoryScrollRef.current) {
+                      e.preventDefault();
+                      categoryScrollRef.current.scrollLeft += e.deltaY;
+                    }
+                  }}
+                  className="flex items-center gap-2.5 overflow-x-auto pb-3 pt-1 scroll-smooth luxury-scrollbar"
+                  style={{
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "#D4AF37 rgba(0, 0, 0, 0.04)",
+                  }}
+                >
+                  {categoryTabs.map((cat) => {
+                    const active = selectedCategory === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className="flex-shrink-0 cursor-pointer transition-all duration-300 flex items-center space-x-2.5 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm group"
+                        style={{
+                          border: active ? "2px solid #D4AF37" : "1.5px solid rgba(0,0,0,0.12)",
+                          backgroundColor: active ? "#111111" : "#FFFFFF",
+                          color: active ? "#D4AF37" : "#111111",
+                          boxShadow: active
+                            ? "0 6px 18px rgba(212,175,55,0.25)"
+                            : "0 1px 4px rgba(0,0,0,0.03)",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!active) {
+                            e.currentTarget.style.borderColor = "#D4AF37";
+                            e.currentTarget.style.backgroundColor = "#FAF8F2";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!active) {
+                            e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)";
+                            e.currentTarget.style.backgroundColor = "#FFFFFF";
+                          }
+                        }}
+                      >
+                        <span>{cat.title}</span>
+                        <span
+                          className="text-[10px] px-2 py-0.5 rounded-full font-extrabold transition-colors"
+                          style={{
+                            backgroundColor: active ? "rgba(212,175,55,0.2)" : "#F1F1EF",
+                            color: active ? "#D4AF37" : "#666666",
+                          }}
+                        >
+                          {cat.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Right Scroll Arrow */}
+                <button
+                  type="button"
+                  onClick={() => handleScrollCategories("right")}
+                  aria-label="Scroll categories right"
+                  className="hidden sm:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white border border-[#D4AF37]/50 shadow-md items-center justify-center text-[#111111] hover:bg-[#111111] hover:text-[#D4AF37] hover:border-[#111111] transition-all cursor-pointer font-bold"
+                >
+                  ›
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Skeleton Loading State or Products Grid */}
@@ -347,7 +498,7 @@ export default function ProductsPage() {
         </div>
       </section>
 
-      <Footer onOpenBooking={() => handleOpenBooking()} />
+      <Footer />
 
       <BookingModal
         isOpen={bookingOpen}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -32,6 +32,20 @@ export default function ServicesPage() {
   // Multi-service selection for booking
   const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
 
+  // Category view mode: wrapped (all visible) or compact carousel
+  const [viewAllCategories, setViewAllCategories] = useState<boolean>(true);
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
+
+  const handleScrollCategories = (direction: "left" | "right") => {
+    if (categoryScrollRef.current) {
+      const scrollAmount = 320;
+      categoryScrollRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
   // Track expanded descriptions per service card
   const [expandedDescIds, setExpandedDescIds] = useState<Record<number, boolean>>({});
 
@@ -57,7 +71,11 @@ export default function ServicesPage() {
         ]);
 
         if (servicesData && servicesData.length > 0) {
-          setServices(servicesData);
+          const sanitizedServices = servicesData.filter((s) => {
+            const t = s.title?.trim().toLowerCase();
+            return t !== "add on" && t !== "addon" && t !== "add-on";
+          });
+          setServices(sanitizedServices);
         }
         if (categoriesData && categoriesData.length > 0) {
           setCategories(categoriesData);
@@ -95,9 +113,9 @@ export default function ServicesPage() {
     return tabs;
   }, [categories, services, totalCount]);
 
-  // Filter services by active category and search
+  // Filter services by active category and search, organized category-by-category
   const filteredServices = useMemo(() => {
-    return services.filter((service) => {
+    const list = services.filter((service) => {
       let matchesCategory = true;
       if (selectedCategory !== "all") {
         matchesCategory =
@@ -117,7 +135,104 @@ export default function ServicesPage() {
 
       return matchesCategory && matchesSearch;
     });
+
+    // Create an order map based on the category list sequence
+    const categoryOrderMap = new Map<string, number>();
+    categories.forEach((cat, index) => {
+      categoryOrderMap.set(String(cat.id), index);
+      if (cat.title) {
+        categoryOrderMap.set(cat.title.toLowerCase().trim(), index);
+      }
+    });
+
+    // Display one category's items completely, then next category, then next
+    return [...list].sort((a, b) => {
+      const catAId = a.category?.id != null ? String(a.category.id) : "";
+      const catATitle = a.category?.title?.toLowerCase().trim() || "";
+      const catBId = b.category?.id != null ? String(b.category.id) : "";
+      const catBTitle = b.category?.title?.toLowerCase().trim() || "";
+
+      const orderA =
+        categoryOrderMap.has(catAId)
+          ? categoryOrderMap.get(catAId)!
+          : categoryOrderMap.has(catATitle)
+          ? categoryOrderMap.get(catATitle)!
+          : 999;
+
+      const orderB =
+        categoryOrderMap.has(catBId)
+          ? categoryOrderMap.get(catBId)!
+          : categoryOrderMap.has(catBTitle)
+          ? categoryOrderMap.get(catBTitle)!
+          : 999;
+
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+
+      // Within the same category, sort alphabetically by title
+      return a.title.localeCompare(b.title);
+    });
   }, [services, selectedCategory, searchQuery, categories]);
+
+  // Group services by category for clean sectioned presentation
+  const categoryGroups = useMemo(() => {
+    if (selectedCategory !== "all") {
+      const currentCat = categories.find((c) => String(c.id) === selectedCategory);
+      return [
+        {
+          id: selectedCategory,
+          title: currentCat?.title || "Treatments",
+          items: filteredServices,
+        },
+      ];
+    }
+
+    const groups: { id: string; title: string; items: ServiceItem[] }[] = [];
+    const groupedMap = new Map<string, ServiceItem[]>();
+
+    filteredServices.forEach((service) => {
+      const key =
+        service.category?.id != null
+          ? String(service.category.id)
+          : service.category?.title?.trim() || "other";
+      if (!groupedMap.has(key)) {
+        groupedMap.set(key, []);
+      }
+      groupedMap.get(key)!.push(service);
+    });
+
+    // Preserve exact category sequence as ordered in categories
+    categories.forEach((cat) => {
+      const keyId = String(cat.id);
+      const items =
+        groupedMap.get(keyId) ||
+        (cat.title ? groupedMap.get(cat.title.trim()) : undefined);
+      if (items && items.length > 0) {
+        groups.push({
+          id: String(cat.id),
+          title: cat.title,
+          items,
+        });
+        groupedMap.delete(keyId);
+        if (cat.title) groupedMap.delete(cat.title.trim());
+      }
+    });
+
+    // Append any miscellaneous/uncategorized services if present
+    groupedMap.forEach((items, key) => {
+      if (items.length > 0) {
+        groups.push({
+          id: key,
+          title: items[0]?.category?.title || "Other Treatments",
+          items,
+        });
+      }
+    });
+
+    return groups;
+  }, [filteredServices, categories, selectedCategory]);
+
 
   // Toggle single service selection
   const toggleServiceSelection = (serviceId: number) => {
@@ -187,7 +302,7 @@ export default function ServicesPage() {
   return (
     <main className="min-h-screen bg-[#FAFAFA] text-[#111111] relative">
       {/* Navigation Header */}
-      <Navbar onOpenBooking={() => handleBookMultiple()} />
+      <Navbar />
 
       {/* Hero Header Banner */}
       <PageHero
@@ -235,57 +350,197 @@ export default function ServicesPage() {
           </div>
 
           {/* Luxury Category Filter Tabs */}
-          <div className="mb-12">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs uppercase font-extrabold tracking-wider text-[#111111] flex items-center gap-2">
-                <span className="text-[#996515]">✦</span> Filter by Treatment Category
-              </span>
-              {(selectedCategory !== "all" || searchQuery) && (
+          <div className="mb-10 sm:mb-12">
+            <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="text-xs uppercase font-extrabold tracking-wider text-[#111111] flex items-center gap-2">
+                  <span className="text-[#996515]">✦</span> Filter by Treatment Category
+                </span>
+                <span className="text-[10px] font-bold text-slate-500 bg-[#F1F1EF] px-2.5 py-0.5 rounded-full border border-slate-200">
+                  {categoryTabs.length} Categories
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* View Mode Toggle: Wrapped vs Carousel */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setSelectedCategory("all");
-                    setSearchQuery("");
-                  }}
-                  className="text-xs font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer underline underline-offset-4"
+                  onClick={() => setViewAllCategories((prev) => !prev)}
+                  className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#111111] hover:text-[#996515] transition-colors cursor-pointer bg-[#F8F8F6] hover:bg-[#FAF8F2] border border-slate-300 hover:border-[#D4AF37] px-3.5 py-1.5 rounded-lg shadow-xs"
                 >
-                  Clear Filters
+                  <span className="text-[#996515] font-mono text-sm leading-none">
+                    {viewAllCategories ? "↔" : "⊞"}
+                  </span>
+                  <span>{viewAllCategories ? "Scroll Mode" : "Show All"}</span>
                 </button>
-              )}
+
+                {(selectedCategory !== "all" || searchQuery) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategory("all");
+                      setSearchQuery("");
+                    }}
+                    className="text-xs font-bold text-[#996515] hover:text-[#111111] transition-colors cursor-pointer underline underline-offset-4"
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center gap-2.5 overflow-x-auto pb-3 pt-1 scrollbar-none">
-              {categoryTabs.map((cat) => {
-                const active = selectedCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className="flex-shrink-0 cursor-pointer transition-all duration-300 flex items-center space-x-2.5 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm group"
-                    style={{
-                      border: active ? "2px solid #D4AF37" : "1.5px solid rgba(0,0,0,0.12)",
-                      backgroundColor: active ? "#111111" : "#FFFFFF",
-                      color: active ? "#D4AF37" : "#111111",
-                      boxShadow: active
-                        ? "0 6px 18px rgba(212,175,55,0.25)"
-                        : "0 1px 4px rgba(0,0,0,0.03)",
-                    }}
-                  >
-                    <span>{cat.title}</span>
-                    <span
-                      className="text-[10px] px-2 py-0.5 rounded-full font-extrabold transition-colors"
+            {/* Mobile-Only Quick Category Dropdown Selector */}
+            <div className="sm:hidden mb-3">
+              <div className="relative">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  aria-label="Select Treatment Category"
+                  className="w-full appearance-none bg-white border border-[#D4AF37]/50 focus:border-[#111111] rounded-xl px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#111111] pr-10 shadow-sm focus:outline-none transition-colors"
+                >
+                  {categoryTabs.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.title} ({cat.count})
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-[#996515]">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Category Pills Navigation */}
+            {viewAllCategories ? (
+              /* Wrapped Grid View: Shows all categories cleanly without any clipping */
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 pt-1 pb-2">
+                {categoryTabs.map((cat) => {
+                  const active = selectedCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className="cursor-pointer transition-all duration-300 flex items-center space-x-2 px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider border shadow-sm group"
                       style={{
-                        backgroundColor: active ? "rgba(212,175,55,0.2)" : "#F1F1EF",
-                        color: active ? "#D4AF37" : "#666666",
+                        border: active ? "2px solid #D4AF37" : "1.5px solid rgba(0,0,0,0.12)",
+                        backgroundColor: active ? "#111111" : "#FFFFFF",
+                        color: active ? "#D4AF37" : "#111111",
+                        boxShadow: active
+                          ? "0 6px 18px rgba(212,175,55,0.25)"
+                          : "0 1px 4px rgba(0,0,0,0.03)",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!active) {
+                          e.currentTarget.style.borderColor = "#D4AF37";
+                          e.currentTarget.style.backgroundColor = "#FAF8F2";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!active) {
+                          e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)";
+                          e.currentTarget.style.backgroundColor = "#FFFFFF";
+                        }
                       }}
                     >
-                      {cat.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                      <span>{cat.title}</span>
+                      <span
+                        className="text-[10px] px-2 py-0.5 rounded-full font-extrabold transition-colors"
+                        style={{
+                          backgroundColor: active ? "rgba(212,175,55,0.2)" : "#F1F1EF",
+                          color: active ? "#D4AF37" : "#666666",
+                        }}
+                      >
+                        {cat.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Carousel View: Horizontal scrollable with navigation arrows */
+              <div className="relative group">
+                {/* Left Scroll Arrow */}
+                <button
+                  type="button"
+                  onClick={() => handleScrollCategories("left")}
+                  aria-label="Scroll categories left"
+                  className="hidden sm:flex absolute -left-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white border border-[#D4AF37]/50 shadow-md items-center justify-center text-[#111111] hover:bg-[#111111] hover:text-[#D4AF37] hover:border-[#111111] transition-all cursor-pointer font-bold"
+                >
+                  ‹
+                </button>
+
+                <div
+                  ref={categoryScrollRef}
+                  onWheel={(e) => {
+                    if (e.deltaY !== 0 && categoryScrollRef.current) {
+                      e.preventDefault();
+                      categoryScrollRef.current.scrollLeft += e.deltaY;
+                    }
+                  }}
+                  className="flex items-center gap-2.5 overflow-x-auto pb-3 pt-1 scroll-smooth luxury-scrollbar"
+                  style={{
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "#D4AF37 rgba(0, 0, 0, 0.04)",
+                  }}
+                >
+                  {categoryTabs.map((cat) => {
+                    const active = selectedCategory === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className="flex-shrink-0 cursor-pointer transition-all duration-300 flex items-center space-x-2.5 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm group"
+                        style={{
+                          border: active ? "2px solid #D4AF37" : "1.5px solid rgba(0,0,0,0.12)",
+                          backgroundColor: active ? "#111111" : "#FFFFFF",
+                          color: active ? "#D4AF37" : "#111111",
+                          boxShadow: active
+                            ? "0 6px 18px rgba(212,175,55,0.25)"
+                            : "0 1px 4px rgba(0,0,0,0.03)",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!active) {
+                            e.currentTarget.style.borderColor = "#D4AF37";
+                            e.currentTarget.style.backgroundColor = "#FAF8F2";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!active) {
+                            e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)";
+                            e.currentTarget.style.backgroundColor = "#FFFFFF";
+                          }
+                        }}
+                      >
+                        <span>{cat.title}</span>
+                        <span
+                          className="text-[10px] px-2 py-0.5 rounded-full font-extrabold transition-colors"
+                          style={{
+                            backgroundColor: active ? "rgba(212,175,55,0.2)" : "#F1F1EF",
+                            color: active ? "#D4AF37" : "#666666",
+                          }}
+                        >
+                          {cat.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Right Scroll Arrow */}
+                <button
+                  type="button"
+                  onClick={() => handleScrollCategories("right")}
+                  aria-label="Scroll categories right"
+                  className="hidden sm:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white border border-[#D4AF37]/50 shadow-md items-center justify-center text-[#111111] hover:bg-[#111111] hover:text-[#D4AF37] hover:border-[#111111] transition-all cursor-pointer font-bold"
+                >
+                  ›
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Skeleton Loading State or Services Cards Grid */}
@@ -349,9 +604,34 @@ export default function ServicesPage() {
             </div>
           ) : (
             <>
-              {/* ── MOBILE VIEW: Sleek Luxury List Layout (~4 cards visible at once, matching reference) ── */}
-              <div className="sm:hidden flex flex-col gap-3">
-                {filteredServices.map((service, idx) => {
+              {/* ── MOBILE VIEW: Sleek Luxury List Layout (Category-by-Category) ── */}
+              <div className="sm:hidden space-y-8">
+                {categoryGroups.map((group) => (
+                  <div key={`mobile-group-${group.id}`} className="space-y-3">
+                    {/* Category Header when viewing All Treatments */}
+                    {selectedCategory === "all" && (
+                      <div className="pt-2 pb-1.5 border-b border-slate-200/80 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-4.5 rounded-full bg-[#D4AF37]" />
+                          <h2 className="text-sm font-sans font-extrabold uppercase tracking-wide text-[#111111]">
+                            {group.title}
+                          </h2>
+                          <span className="text-[11px] font-bold text-slate-500">
+                            ({group.items.length})
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCategory(group.id)}
+                          className="text-[10px] font-extrabold uppercase tracking-wider text-[#996515] hover:text-[#111111] transition-colors cursor-pointer"
+                        >
+                          View Only ›
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col gap-3">
+                      {group.items.map((service, idx) => {
                   const isSelected = selectedServiceIds.includes(service.id);
                   const hasDiscount = Boolean(
                     service.discount &&
@@ -505,13 +785,42 @@ export default function ServicesPage() {
                         </button>
                       </div>
                     </div>
-                  );
-                })}
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              {/* ── DESKTOP VIEW: High-End Luxury Cards Grid ── */}
-              <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {filteredServices.map((service, idx) => {
+              {/* ── DESKTOP VIEW: High-End Luxury Cards Grid (Category-by-Category) ── */}
+              <div className="hidden sm:block space-y-12">
+                {categoryGroups.map((group) => (
+                  <div key={`desktop-group-${group.id}`} className="space-y-6">
+                    {/* Category Header when viewing All Treatments */}
+                    {selectedCategory === "all" && (
+                      <div className="pt-4 pb-3 border-b border-slate-200/80 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="w-2 h-6 rounded-full bg-[#D4AF37]" />
+                          <h2 className="text-xl sm:text-2xl font-sans font-extrabold uppercase tracking-wide text-[#111111]">
+                            {group.title}
+                          </h2>
+                          <span className="text-xs font-bold text-slate-500">
+                            ({group.items.length} {group.items.length === 1 ? "treatment" : "treatments"})
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCategory(group.id)}
+                          className="text-xs font-bold text-[#996515] hover:text-[#111111] hover:underline cursor-pointer flex items-center gap-1 transition-colors"
+                        >
+                          <span>View Only {group.title}</span>
+                          <span>›</span>
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                      {group.items.map((service, idx) => {
                   const isSelected = selectedServiceIds.includes(service.id);
                   const hasDiscount = Boolean(
                     service.discount &&
@@ -704,8 +1013,11 @@ export default function ServicesPage() {
                         </div>
                       </div>
                     </div>
-                  );
-                })}
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             </>
           )}
@@ -871,7 +1183,7 @@ export default function ServicesPage() {
       )}
 
       {/* Footer */}
-      <Footer onOpenBooking={() => handleBookMultiple()} />
+      <Footer />
 
       {/* Interactive Booking Drawer / Modal */}
       <BookingModal

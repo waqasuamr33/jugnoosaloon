@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
+
 interface HowItWorksProps {
-  onOpenBooking: () => void;
+  onOpenBooking?: () => void;
 }
 
 export default function HowItWorks({ onOpenBooking }: HowItWorksProps) {
@@ -42,12 +44,12 @@ export default function HowItWorks({ onOpenBooking }: HowItWorksProps) {
                 Select your service, schedule an appointment, and receive top-notch care from our skilled artists.
               </p>
               <div className="pt-2">
-                <button
-                  onClick={onOpenBooking}
-                  className="px-8 py-3.5 rounded-full bg-[#111111] hover:bg-[#D4AF37] hover:text-black text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                <Link
+                  href="/services"
+                  className="px-8 py-3.5 rounded-full bg-[#111111] hover:bg-[#D4AF37] hover:text-black text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer inline-block text-center"
                 >
-                  Get A Consultation
-                </button>
+                  Book an Appointment
+                </Link>
               </div>
             </div>
 

@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 interface HeroProps {
-  onOpenBooking: () => void;
+  onOpenBooking?: () => void;
 }
 
 const slides = [
@@ -159,12 +160,12 @@ export default function Hero({ onOpenBooking }: HeroProps) {
 
           {/* CTA Action Buttons */}
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-2">
-            <button
-              onClick={onOpenBooking}
-              className="px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-[#D4AF37] text-black font-extrabold text-xs uppercase tracking-widest hover:bg-white transition-all duration-300 cursor-pointer shadow-lg shadow-[#D4AF37]/20 border-2 border-[#D4AF37]"
+            <Link
+              href="/services"
+              className="px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-[#D4AF37] text-black font-extrabold text-xs uppercase tracking-widest hover:bg-white transition-all duration-300 cursor-pointer shadow-lg shadow-[#D4AF37]/20 border-2 border-[#D4AF37] inline-block text-center"
             >
               Book Appointment
-            </button>
+            </Link>
 
             <a
               href="tel:+923194415757"

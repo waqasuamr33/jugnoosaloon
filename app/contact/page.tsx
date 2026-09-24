@@ -64,7 +64,7 @@ ${formData.message.trim()}`;
 
   return (
     <main className="min-h-screen bg-[#FAFAFA] text-[#111111] relative">
-      <Navbar onOpenBooking={() => setBookingOpen(true)} />
+      <Navbar />
 
       {/* Hero Header Banner with Golden Light Ray */}
       <PageHero
@@ -333,7 +333,7 @@ ${formData.message.trim()}`;
       {/* Saloon Location & Interactive Google Map Section */}
       <LocationMap />
 
-      <Footer onOpenBooking={() => setBookingOpen(true)} />
+      <Footer />
 
       <BookingModal
         isOpen={bookingOpen}

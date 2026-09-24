@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import ConsultationModal from "./ConsultationModal";
 
 interface NavbarProps {
   onOpenBooking?: (serviceName?: string) => void;
@@ -16,6 +17,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [consultModalOpen, setConsultModalOpen] = useState(false);
   const pathname = usePathname();
   const { customer, isAuthenticated, logout, openAuthModal } = useAuth();
   const { totalItemsCount, openCart } = useCart();
@@ -172,21 +174,13 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
             </button>
           )}
 
-          {onOpenBooking ? (
-            <button
-              onClick={() => onOpenBooking()}
-              className="px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider text-white bg-[#111111] hover:bg-[#D4AF37] hover:text-black transition-all shadow-md active:scale-95 cursor-pointer"
-            >
-              Book Online
-            </button>
-          ) : (
-            <Link
-              href="/booking"
-              className="px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider text-white bg-[#111111] hover:bg-[#D4AF37] hover:text-black transition-all shadow-md active:scale-95 text-center"
-            >
-              Book Online
-            </Link>
-          )}
+          <button
+            type="button"
+            onClick={() => setConsultModalOpen(true)}
+            className="px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider text-white bg-[#111111] hover:bg-[#D4AF37] hover:text-black transition-all shadow-md active:scale-95 text-center cursor-pointer"
+          >
+            Consult
+          </button>
         </div>
 
         {/* Mobile Menu Toggle & Action CTAs */}
@@ -208,22 +202,14 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
             )}
           </button>
 
-          {/* Book CTA on mobile */}
-          {onOpenBooking ? (
-            <button
-              onClick={() => onOpenBooking()}
-              className="px-3.5 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider text-white bg-[#111111] hover:bg-[#D4AF37] hover:text-black transition-all shadow-sm active:scale-95 cursor-pointer"
-            >
-              Book
-            </button>
-          ) : (
-            <Link
-              href="/booking"
-              className="px-3.5 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider text-white bg-[#111111] hover:bg-[#D4AF37] hover:text-black transition-all shadow-sm active:scale-95 text-center"
-            >
-              Book
-            </Link>
-          )}
+          {/* Consult CTA on mobile */}
+          <button
+            type="button"
+            onClick={() => setConsultModalOpen(true)}
+            className="px-3.5 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider text-white bg-[#111111] hover:bg-[#D4AF37] hover:text-black transition-all shadow-sm active:scale-95 text-center cursor-pointer"
+          >
+            Consult
+          </button>
 
           {/* Hamburger Menu Toggle */}
           <button
@@ -307,28 +293,25 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
             </Link>
           ))}
           <div className="pt-2">
-            {onOpenBooking ? (
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenBooking();
-                }}
-                className="w-full py-3 rounded-full text-center text-xs font-bold uppercase tracking-wider text-white bg-[#111111]"
-              >
-                Book Appointment Now
-              </button>
-            ) : (
-              <Link
-                href="/booking"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block w-full py-3 rounded-full text-center text-xs font-bold uppercase tracking-wider text-white bg-[#111111]"
-              >
-                Book Appointment Now
-              </Link>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setConsultModalOpen(true);
+              }}
+              className="block w-full py-3 rounded-full text-center text-xs font-bold uppercase tracking-wider text-white bg-[#111111] hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer shadow-sm"
+            >
+              Consult Us
+            </button>
           </div>
         </div>
       )}
+
+      {/* Luxury WhatsApp Consultation Modal */}
+      <ConsultationModal
+        isOpen={consultModalOpen}
+        onClose={() => setConsultModalOpen(false)}
+      />
     </header>
   );
 }

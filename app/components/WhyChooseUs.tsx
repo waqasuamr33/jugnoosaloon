@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 interface WhyChooseUsProps {
-  onOpenBooking: (serviceName?: string) => void;
+  onOpenBooking?: (serviceName?: string) => void;
 }
 
 const highlights = [
@@ -100,8 +101,8 @@ export default function WhyChooseUs({ onOpenBooking }: WhyChooseUsProps) {
 
             {/* CTA */}
             <div className="pt-2">
-              <button
-                onClick={() => onOpenBooking()}
+              <Link
+                href="/services"
                 className="cursor-pointer inline-flex items-center gap-2 font-sans font-bold text-xs uppercase tracking-[0.18em] transition-all"
                 style={{
                   backgroundColor: "#111111",
@@ -125,7 +126,7 @@ export default function WhyChooseUs({ onOpenBooking }: WhyChooseUsProps) {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
-              </button>
+              </Link>
             </div>
 
           </div>
